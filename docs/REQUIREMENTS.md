@@ -1,6 +1,6 @@
 # Requirements and evidence matrix
 
-This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observable deliverables. Every hardware result remains **PENDING** until it is collected and recorded. Phase 1 defines the plan only.
+This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observable deliverables. Every hardware result remains **PENDING** until it is collected and recorded. Phase 1 defined the plan; Phase 2 added and compiled a hardware-independent firmware foundation.
 
 | Requirement | Measurable deliverable | Evidence location / acceptance |
 |---|---|---|
@@ -17,9 +17,12 @@ This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observ
 | Reliability / fault handling | At least 15-minute continuous run and controlled sensor/data fault test; document recovery and observed behavior | Timestamped logs and test record in `evidence/tests/`; Phase 6 |
 | Submission evidence | Reproducible build steps, test plan/results, logs, screenshots/photos only when captured, limitations, and evidence manifest | `docs/` and `evidence/`; Phase 6 |
 
-## Phase 1 acceptance
+## Phase 1 and Phase 2 acceptance
 
 - Required folder layout and named documents are present.
 - Architecture, six phases, measurable deliverables, limitations, and next steps are documented.
 - Every onboard component is marked **UNVERIFIED** in the inventory.
-- Git status and local Markdown links are checked; only Phase 1 files are committed if identity is available.
+- Git status and local Markdown links are checked; Phase 1 and Phase 2 changes are committed if identity is available.
+- Phase 2 source contains four FreeRTOS tasks, two bounded queues, task notifications, the ARM_CM4F port, and heap_4; `pio run` links the image.
+- Host tests cover invalid/unavailable classification output and bounded logging. No hardware behavior is accepted from a host test or cross-compile.
+- Flash/RAM evidence distinguishes PlatformIO's report, ELF sections and runtime measurements. FreeRTOS heap and stack high-water values remain runtime-only diagnostics.

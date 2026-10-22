@@ -1,0 +1,40 @@
+Processing rtspark_f407zg_hsi (platform: ststm32@20.0.0; board: rtspark_f407zg_hsi; framework: stm32cube)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/ststm32/rtspark_f407zg_hsi.html
+PLATFORM: ST STM32 (20.0.0) > ParcelSense STM32F407ZG HSI foundation (RT-Spark hardware unverified)
+HARDWARE: STM32F407ZGT6 16MHz, 128KB RAM, 1MB Flash
+DEBUG: Current (stlink) External (stlink)
+PACKAGES:
+ - framework-stm32cubef4 @ 1.28.3
+ - tool-ldscripts-ststm32 @ 0.3.0
+ - toolchain-gccarmnoneeabi @ 1.120301.0 (12.3.1)
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 0 compatible libraries
+Scanning dependencies...
+No dependencies
+Building in release mode
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkCMSISDevice/gcc/startup_stm32f407xx.o
+Linking .pio/build/rtspark_f407zg_hsi/firmware.elf
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-closer.o): in function `_close_r':
+(.text._close_r+0xc): warning: _close is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-readr.o): in function `_read_r':
+(.text._read_r+0x10): warning: _read is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-writer.o): in function `_write_r':
+(.text._write_r+0x10): warning: _write is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: warning: .pio/build/rtspark_f407zg_hsi/firmware.elf has a LOAD segment with RWX permissions
+Checking size .pio/build/rtspark_f407zg_hsi/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  19.4% (used 25380 bytes from 131072 bytes)
+Flash: [          ]   0.9% (used 9524 bytes from 1048576 bytes)
+Building .pio/build/rtspark_f407zg_hsi/firmware.bin
+========================= [SUCCESS] Took 1.23 seconds =========================
+
+********************************************************************************
+We found 467.71MB of unnecessary PlatformIO system data (temporary files, unnecessary packages, etc.).
+Use `pio system prune --dry-run` to list them or `pio system prune` to save disk space.
+
+Exit status: 0

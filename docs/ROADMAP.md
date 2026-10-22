@@ -1,6 +1,6 @@
 # Development roadmap
 
-Six phases are planned. Work stops at each genuine hardware gate until the relevant board evidence is available. Current scope is **Phase 1 only**.
+Six phases are planned. Work stops at each genuine hardware gate until the relevant board evidence is available. **Phase 1 and the software-only portion of Phase 2 are complete.**
 
 | Phase | Focus | Measurable deliverables / exit evidence |
 |---|---|---|

@@ -1,0 +1,3 @@
+Command: sh tools/test_host.sh
+PASS: placeholder validity, metadata, empty/full/wrapped log buffer
+Exit status: 0

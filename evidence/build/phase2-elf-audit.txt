@@ -1,0 +1,54 @@
+$ arm-none-eabi-size -A .pio/build/rtspark_f407zg_hsi/firmware.elf
+.pio/build/rtspark_f407zg_hsi/firmware.elf  :
+section              size        addr
+.isr_vector           392   134217728
+.text                8832   134218128
+.rodata               676   134226960
+.ARM.extab              0   134227636
+.ARM                    8   134227636
+.preinit_array          0   134227644
+.init_array             4   134227644
+.fini_array             4   134227648
+.data                  16   536870912
+.ccmram                 0   268435456
+.bss                25364   536870928
+._user_heap_stack    2052   536896292
+.ARM.attributes        48           0
+.comment               57           0
+Total               37453
+
+
+
+$ arm-none-eabi-readelf -A .pio/build/rtspark_f407zg_hsi/firmware.elf
+Attribute Section: aeabi
+File Attributes
+  Tag_CPU_name: "7E-M"
+  Tag_CPU_arch: v7E-M
+  Tag_CPU_arch_profile: Microcontroller
+  Tag_THUMB_ISA_use: Thumb-2
+  Tag_FP_arch: VFPv4-D16
+  Tag_ABI_PCS_wchar_t: 4
+  Tag_ABI_FP_denormal: Needed
+  Tag_ABI_FP_exceptions: Needed
+  Tag_ABI_FP_number_model: IEEE 754
+  Tag_ABI_align_needed: 8-byte
+  Tag_ABI_enum_size: small
+  Tag_ABI_HardFP_use: SP only
+  Tag_ABI_VFP_args: VFP registers
+  Tag_CPU_unaligned_access: v6
+
+$ arm-none-eabi-nm --defined-only .pio/build/rtspark_f407zg_hsi/firmware.elf (selected)
+08002324 W Reset_Handler
+08002378 T SystemInit
+08000330 T SVC_Handler
+080003c0 T PendSV_Handler
+08000424 T SysTick_Handler
+08001efc T TIM6_DAC_IRQHandler
+08001e3c T HAL_InitTick
+08001c40 t SensorTask
+08001bf4 t InferenceTask
+08001bac t FeedbackTask
+08001b50 t DiagnosticTask
+PASS: one startup/system definition, one strong owner per active RTOS/timebase IRQ, four task entries. Reset_Handler is the startup vector’s weak default.
+
+firmware.bin byte count: 9940

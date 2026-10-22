@@ -1,18 +1,19 @@
 # PlatformIO / embedded build output
 .pio/
-build/
+/build/
+firmware/build/
 dist/
 *.elf
 *.hex
 *.bin
 *.map
 *.uf2
-*.hex
 *.o
 *.a
 *.d
 *.lst
 *.su
+evidence/build/phase2-attempt*.log
 
 # Python environments, bytecode, and test/tool caches
 .venv/
