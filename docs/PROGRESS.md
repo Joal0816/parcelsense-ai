@@ -34,7 +34,7 @@
 - The initial ParcelSense Field Desk app is implemented in `frontend/`: local CSV review, browser storage/export, pipeline report review, install metadata, and an app-shell service worker. This companion does not change the embedded phase status or provide board connectivity.
 - `cd frontend && npm test`: **PASS**, 9 tests. `npm run build`: **PASS**; production bundle, manifest, service worker, and security headers are generated.
 - The `parcelsense-ai` Cloudflare Pages Direct Upload project is live at `https://parcelsense-ai.pages.dev`. Hosted production HTTPS, security headers, manifest, service-worker cache, offline navigation, and no-external-resource behavior were verified in Chromium.
-- The custom domain `parcelsense.joalvergs.tech` is associated with the Pages project but awaits a Name.com CNAME: host `parcelsense`, target `parcelsense-ai.pages.dev`, TTL 300. Name.com nameservers are authoritative; no DNS record was changed because no Name.com account/API connection is available here. Custom-domain HTTPS/TLS verification remains pending.
+- The custom domain `parcelsense.joalvergs.tech` is live. Name.com authoritative DNS and public resolvers return the expected CNAME, Cloudflare Pages reports DNS and HTTP validation active, and HTTPS responds with HTTP 200. Custom-host offline navigation passed in Chromium with a resolver override because the test environment cached the earlier NXDOMAIN.
 - Muted-text contrast was improved and checked against light surfaces; keyboard/screen-reader and cross-browser field checks remain pending.
 - Deployment commands, DNS guidance, and current blockers are recorded in [PWA deployment](PWA_DEPLOYMENT.md).
 

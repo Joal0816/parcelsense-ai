@@ -2,8 +2,8 @@
 
 ## Recommended address and host
 
-- Intended PWA address: `https://parcelsense.joalvergs.tech` (custom-domain DNS is pending)
-- Current production URL: `https://parcelsense-ai.pages.dev`
+- Production PWA address: `https://parcelsense.joalvergs.tech` (custom domain active)
+- Cloudflare Pages fallback URL: `https://parcelsense-ai.pages.dev`
 - Static host: Cloudflare Pages (selected by the user)
 - Pages project: `parcelsense-ai` (created as Direct Upload)
 
@@ -33,17 +33,17 @@ The custom domain is associated with the Pages project. The confirmed CNAME targ
 
 ## Name.com DNS record
 
-The Pages project already has `parcelsense.joalvergs.tech` associated as a custom domain. Cloudflare requires associating the subdomain with the project before manually adding a CNAME at an external DNS provider. Since Name.com nameservers are authoritative, add this record in Name.com **Manage DNS Records**:
+The Pages project has `parcelsense.joalvergs.tech` associated as a custom domain. Cloudflare requires associating the subdomain with the project before adding a CNAME at an external DNS provider. The verified Name.com record is:
 
 | Type | Host | Answer / target | TTL |
 |---|---|---|---|
-| CNAME | `parcelsense` | `parcelsense-ai.pages.dev` | `300` (or Name.com's default) |
+| CNAME | `parcelsense` | `parcelsense-ai.pages.dev` | `300` |
 
 Do not enter `https://` or a path in the CNAME target. Do not add an A/AAAA record for the same `parcelsense` hostname alongside this CNAME. This setup affects only the proposed PWA subdomain; it does not require changing the apex `joalvergs.tech` records or adding a wildcard.
 
 Name.com only serves these DNS records when the domain is using Name.com's nameservers. If its nameservers point elsewhere, add the CNAME at the active authoritative DNS provider instead. Do not switch nameservers without first checking and preserving all existing website and email records.
 
-DNS pointing does not itself establish HTTPS. After the record resolves, wait for Cloudflare Pages to show the custom domain and TLS certificate as active, then verify the site loads over HTTPS. The PWA must be served from HTTPS when hosted; localhost is appropriate for local development.
+Cloudflare Pages now reports the custom domain, DNS verification, and HTTP validation as active. Public resolvers return the expected CNAME, and HTTPS responds with HTTP 200. The PWA must be served from HTTPS when hosted; localhost is appropriate for local development.
 
 ## Name.com steps
 
@@ -63,5 +63,5 @@ References: [Name.com: Adding a CNAME Record](https://www.name.com/support/artic
 - Local production-preview check: **PASS** in Chromium 153. The service worker controlled the page, cached all 8 app-shell files, and an offline navigation rendered the app. Desktop and 390 px mobile views were inspected with no horizontal overflow.
 - Hosted preview and production checks: **PASS** at `https://preview.parcelsense-ai.pages.dev` and `https://parcelsense-ai.pages.dev`; HTTPS, security headers, manifest, worker, 8 cached assets, offline navigation, and zero external app resource requests were verified.
 - Pages production deployment: **LIVE** at `https://parcelsense-ai.pages.dev` (deployment `3825e8da-8f75-4199-97c4-1dca3c185e4f`, source commit `18907df`).
-- Custom-domain association: created in Pages, but validation is **PENDING** with `CNAME record not set`.
-- DNS: Name.com authoritative nameservers are confirmed. No CNAME/A/AAAA record currently exists for `parcelsense.joalvergs.tech`; no Name.com API token or connected DNS tool is available here, so the record has not been changed. After adding `CNAME parcelsense -> parcelsense-ai.pages.dev` (TTL 300), verify Cloudflare TLS activation and repeat the hosted check on the custom hostname.
+- Custom-domain association: **ACTIVE** in Cloudflare Pages; DNS verification and HTTP certificate validation are active.
+- Name.com authoritative DNS and public resolvers return `parcelsense.joalvergs.tech CNAME parcelsense-ai.pages.dev` with TTL 300. HTTPS responds with HTTP 200, and a Chromium test confirmed service-worker installation and offline shell navigation on the custom hostname. The test environment had cached the earlier NXDOMAIN, so Chromium used a host override to the Cloudflare Pages IP while public DNS propagated.
