@@ -34,6 +34,8 @@ See [firmware build instructions](docs/BUILD.md). Run `pio run` to build the MCU
 
 The offline CSV processing steps and synthetic-only pipeline tests are described in [the ML pipeline guide](docs/ML_PIPELINE.md). Real capture requires the board and an instructor-reviewed safe labeling protocol.
 
+A separate, unimplemented companion interface is outlined in the [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md). It is an optional offline review tool; embedded inference must remain independent of it.
+
 ## Development phases
 
 The six phases, measurable deliverables, and acceptance evidence are tracked in [the roadmap](docs/ROADMAP.md) and [requirements matrix](docs/REQUIREMENTS.md). The current phase status is in [progress](docs/PROGRESS.md).
