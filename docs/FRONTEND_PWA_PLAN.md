@@ -183,7 +183,8 @@ For spreadsheet use, offer two clearly named exports when needed: **exact data e
 
 ## Immediate next steps
 
-1. Verify production-preview offline install, reload, and app-shell recovery in each supported browser.
-2. Exercise CSV edge cases, IndexedDB quota failure, deletion, export, and malformed evaluation reports with representative project files.
-3. Run keyboard, screen-reader, contrast, zoom, and mobile reflow checks before release.
-4. When the board arrives, finish hardware inventory and module diagnostics, then decide whether optional F4 live transport is supported and worthwhile. Keep embedded Phases 3–6 and their evidence gates authoritative for hardware claims.
+The current software pass adds a skip link, visible programmatic route/session focus, live connection and import-progress semantics, 44 px primary controls, and a reduced-motion override. Unit tests cover quota-error recovery copy. Run the keyboard, accessibility-tree, contrast, reflow, import/export, and offline checks documented in `docs/PROGRESS.md`; these checks do not complete mobile screen-reader or real quota-pressure validation.
+
+1. Validate import → review → persist → reload → export/delete with representative board CSVs when available; no board CSV is currently available.
+2. Complete screen-reader, supported-browser/device, browser-cleared storage, and real quota-pressure validation before declaring F5 field acceptance.
+3. Keep all live device transport disabled until board revision, firmware protocol, and browser compatibility are verified. The board-arrival and firmware evidence gates remain in `docs/BOARD_ARRIVAL_CHECKLIST.md` and Phases 3–6 of the embedded roadmap.

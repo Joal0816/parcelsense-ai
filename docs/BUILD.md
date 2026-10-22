@@ -26,7 +26,7 @@ PlatformIO reports 9,524 bytes Flash and 25,380 bytes RAM. The ELF section repor
 
 The linker emits expected newlib syscall warnings (`_read`, `_write`, `_close`, `_lseek` are unimplemented) because this foundation has no console, plus an RWX load-segment warning from the inherited STM32 linker layout. The build has three CubeF4 `-Wextra` unused-parameter warnings. These warnings do not prevent the image from linking. Review memory sections and these warnings if adding console, bootloader, or MPU requirements.
 
-Host command: `sh tools/test_host.sh` — **PASS**. Results: `evidence/tests/phase2-host-tests.log`. This test covers the unavailable-classification contract and log-buffer empty/full/wrap behavior; it does not exercise FreeRTOS scheduling or hardware.
+Host command: `sh tools/test_host.sh` — **PASS**. Results: `evidence/tests/phase2-host-tests.log`. The current test also checks the host-testable classifier callback contract, including feature count, finite values, valid class mapping, invalid return codes, and unavailable fallback. The callback fixture is not a trained model. Tests do not exercise FreeRTOS scheduling or hardware.
 
 ## Phase 3 interface build
 
@@ -35,3 +35,7 @@ After adding the typed sensor interfaces and module registry, `pio run` passed a
 ## Phase 4 host pipeline
 
 See [ML pipeline guide](ML_PIPELINE.md) for the CSV schema, capture protocol, processing outputs, and evidence limits. The ML smoke test uses only temporary synthetic fixtures. It requires Python 3 standard library and a host C compiler for the C parity case; the compiler-specific test is skipped if `cc` is unavailable. No trained model or board dataset is committed.
+
+## Classifier integration preparation
+
+`firmware/src/classifier.c` validates the 24-feature model ABI emitted by the pipeline and maps valid model result indices to the three UI states. It rejects invalid inputs/results while keeping the output unavailable. `InferenceTask` does not call this adapter; no trained model is linked. The `pio run` smoke build on the current tree passed with 9,956 bytes Flash and 25,640 bytes RAM reported. A cross-language test checks that the firmware feature count matches the pipeline feature list. These checks validate interfaces only, not prediction quality, target execution, or runtime memory.

@@ -1,14 +1,68 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include "classifier.h"
 #include "foundation.h"
 #include "log_buffer.h"
 #include "hardware/module_diagnostics.h"
 #include "hardware/sensors.h"
 #include "mock_hardware.h"
 
+static int model_fixture_result;
+static unsigned model_fixture_calls;
+
+/* Deterministic ABI fixture only; it is not a trained ParcelSense model. */
+static int model_fixture_predict(const float *features, size_t count)
+{
+    assert(features != NULL && count == PARCELSENSE_FEATURE_COUNT);
+    model_fixture_calls++;
+    return model_fixture_result;
+}
+
 int main(void)
 {
+    float feature_fixture[PARCELSENSE_FEATURE_COUNT] = {0};
+    UiClassification classification = UI_STATE_ROUGH_HANDLING;
+    const UiClassification expected_states[] = {
+        UI_STATE_STABLE, UI_STATE_NORMAL_HANDLING, UI_STATE_ROUGH_HANDLING
+    };
+    for (int label = 0; label < 3; ++label) {
+        model_fixture_result = label;
+        assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+                   PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_OK);
+        assert(classification == expected_states[label]);
+    }
+    assert(model_fixture_calls == 3U);
+
+    classification = UI_STATE_ROUGH_HANDLING;
+    assert(parcelsense_classify_features(NULL, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_NOT_INITIALIZED);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    assert(parcelsense_classify_features(model_fixture_predict, NULL,
+               PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_INVALID_ARGUMENT);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT - 1U, &classification) == PARCEL_STATUS_INVALID_ARGUMENT);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    feature_fixture[7] = NAN;
+    assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_INVALID_DATA);
+    feature_fixture[7] = INFINITY;
+    assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_INVALID_DATA);
+    feature_fixture[7] = 0.0f;
+    assert(model_fixture_calls == 3U); /* Invalid inputs never reach the model. */
+    model_fixture_result = -1;
+    assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_INVALID_DATA);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    model_fixture_result = 3;
+    assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT, &classification) == PARCEL_STATUS_INVALID_DATA);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    assert(parcelsense_classify_features(model_fixture_predict, feature_fixture,
+               PARCELSENSE_FEATURE_COUNT, NULL) == PARCEL_STATUS_INVALID_ARGUMENT);
+
     for (unsigned valid = 0; valid < 2; valid++) {
         SensorHeartbeat heartbeat = {UINT32_MAX, 123U, valid != 0};
         FoundationResult result = foundation_placeholder_result(heartbeat);
@@ -106,6 +160,6 @@ int main(void)
     assert(module_diagnostics_get(&registry, MODULE_AP3216C_LIGHT_PROXIMITY)->health == MODULE_HEALTH_ABSENT);
     assert(module_diagnostics_get(&registry, MODULE_AHT10_ENVIRONMENT)->health == MODULE_HEALTH_UNVERIFIED);
 
-    puts("PASS: validation, explicit test fixtures, safe unverified inventory, module faults, and log buffer");
+    puts("PASS: classifier adapter, sensor validation, safe unverified inventory, module faults, and log buffer");
     return 0;
 }

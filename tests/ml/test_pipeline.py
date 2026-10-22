@@ -5,6 +5,7 @@ import csv
 import ctypes
 import importlib.util
 import math
+import re
 import shutil
 import subprocess
 import sys
@@ -58,6 +59,12 @@ def write_rows(path: Path, rows):
 
 
 class PipelineTests(unittest.TestCase):
+    def test_firmware_model_abi_matches_pipeline_feature_contract(self):
+        header = (ROOT / "firmware" / "include" / "classifier.h").read_text(encoding="utf-8")
+        match = re.search(r"#define\s+PARCELSENSE_FEATURE_COUNT\s+(\d+)U", header)
+        self.assertIsNotNone(match)
+        self.assertEqual(int(match.group(1)), len(pipeline.FEATURE_NAMES))
+
     def test_invalid_sample_breaks_contiguous_windows(self):
         rows = list(synthetic_rows())[:100]
         for i, row in enumerate(rows):

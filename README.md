@@ -13,7 +13,7 @@ Capture package motion on the board, classify handling locally, provide a local 
 - Offline on-device inference; no network is required by the prediction path.
 - Python tooling for board-data processing, training, validation, and compact model export.
 
-The RT-Spark revision, installed sensors and UI, pinout, clock source, programmer, and physical board compatibility are **UNVERIFIED**. The local PlatformIO configuration targets the STM32F407ZGT6 MCU at internal 16 MHz HSI without assigning peripheral pins. Phase 3 defines hardware-independent typed sensor/UI interfaces; no device drivers or physical probes are included. See [hardware inventory](docs/HARDWARE_INVENTORY.md) and [blockers](docs/BLOCKERS.md). No board runtime or classifier performance results are claimed.
+The RT-Spark revision, installed sensors and UI, pinout, clock source, programmer, and physical board compatibility are **UNVERIFIED**. The local PlatformIO configuration targets the STM32F407ZGT6 MCU at internal 16 MHz HSI without assigning peripheral pins. Phase 3 defines hardware-independent typed sensor/UI interfaces; no device drivers or physical probes are included. See [hardware inventory](docs/HARDWARE_INVENTORY.md), [blockers](docs/BLOCKERS.md), and the [board-arrival checklist](docs/BOARD_ARRIVAL_CHECKLIST.md). No board runtime or classifier performance results are claimed.
 
 ## Architecture
 

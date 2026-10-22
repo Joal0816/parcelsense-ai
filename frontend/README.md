@@ -34,6 +34,6 @@ Set the Pages project root to `frontend`, the build command to `npm ci && npm ru
 - Caches the static app shell for offline relaunch after a successful production visit.
 - Keeps device state unverified and live actions disabled until a physical board and interface are verified.
 
-The current import cap is 25 MiB with a 2 MiB synchronous fallback if Web Workers are unavailable. The cap is intentionally conservative and has not been benchmarked on target phones. Browser storage quotas, eviction, PWA installation, and accessibility still need field validation.
+The current import cap is 25 MiB with a 2 MiB synchronous fallback if Web Workers are unavailable. The cap is intentionally conservative and has not been benchmarked on target phones. Route/session focus, keyboard skip navigation, live connection/import status, larger touch controls, and reduced-motion handling are implemented. Quota recovery copy has a unit test; actual quota pressure, browser eviction, mobile assistive technology, and supported-device field validation remain pending.
 
 Run the frontend tests with `npm test`; run type checking and the production build with `npm run build`.

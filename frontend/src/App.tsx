@@ -49,7 +49,7 @@ function formatDate(value: string, compact = false): string {
 }
 
 function PageTitle({ overline, title, description, action }: { overline: string; title: string; description: string; action?: ReactNode }) {
-  return <div className="page-title"><div><div className="eyebrow">{overline}</div><h1>{title}</h1><p>{description}</p></div>{action}</div>;
+  return <div className="page-title"><div><div className="eyebrow">{overline}</div><h1 tabIndex={-1}>{title}</h1><p>{description}</p></div>{action}</div>;
 }
 
 function StatusPill({ children, tone = "neutral", dot = true }: { children: ReactNode; tone?: "neutral" | "good" | "alert"; dot?: boolean }) {
@@ -77,6 +77,9 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const [deleting, setDeleting] = useState(false);
   const [storageInfo, setStorageInfo] = useState<{ supported: boolean; persistent?: boolean; usage?: number; quota?: number }>({ supported: false });
   const [requestingPersistence, setRequestingPersistence] = useState(false);
+  const mainContentRef = useRef<HTMLElement>(null);
+  const previousPageRef = useRef(page);
+  const previousSelectionRef = useRef(selected?.id);
   const workerRef = useRef<Worker | null>(null);
   const csvInput = useRef<HTMLInputElement>(null);
   const reportInput = useRef<HTMLInputElement>(null);
@@ -100,6 +103,17 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   };
 
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    if (previousPageRef.current === page) return;
+    previousPageRef.current = page;
+    mainContentRef.current?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true });
+  }, [page]);
+  useEffect(() => {
+    if (previousSelectionRef.current === selected?.id) return;
+    previousSelectionRef.current = selected?.id;
+    const heading = selected ? ".session-detail h2" : ".data-list-section h2";
+    mainContentRef.current?.querySelector<HTMLElement>(heading)?.focus({ preventScroll: true });
+  }, [selected?.id]);
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     window.addEventListener("online", update); window.addEventListener("offline", update);
@@ -230,13 +244,14 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   function handleDrag(event: DragEvent<HTMLElement>, active: boolean) { event.preventDefault(); setDragging(active); }
 
   return <div className="app-frame">
-    <aside className="sidebar" aria-label="Main navigation">
+    <a className="skip-link" href="#main-content">Skip to main content</a>
+    <aside className="sidebar">
       <button className="brand" type="button" onClick={() => { setPage("overview"); setSelected(null); }} aria-label="ParcelSense Field Desk home">
         <span className="brand-mark"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="m6 15 16-9 16 9-16 9-16-9Zm0 0v15l16 9 16-9V15M22 24v15"/><path d="M29 25h7v-7"/></svg></span>
         <span className="brand-name">ParcelSense<span>FIELD DESK <i>v0.1</i></span></span>
       </button>
       <div className="nav-label">WORKSPACE</div>
-      <nav className="nav-list">
+      <nav className="nav-list" aria-label="Workspace sections">
         {PAGES.map((item, index) => <button key={item.id} className={`nav-item ${page === item.id ? "is-active" : ""}`} type="button" onClick={() => { setPage(item.id); if (item.id !== "sessions") setSelected(null); }} aria-current={page === item.id ? "page" : undefined}>
           <span className="nav-icon"><Icon name={item.icon} /></span><span className="nav-item-copy"><span>{item.name}</span><small>{item.detail}</small></span><span className="nav-index">0{index + 1}</span>
         </button>)}
@@ -251,11 +266,11 @@ function App({ offlineReady }: { offlineReady: boolean }) {
         <div className="breadcrumb"><span>ParcelSense AI</span><Icon name="chevron" size={14} /><b>{pageName}</b></div>
         <div className="topbar-status">
           <StatusPill tone={offlineReady ? "good" : "neutral"}>{offlineReady ? "Offline ready" : "Local preview"}</StatusPill>
-          <span className={`connection-label ${online ? "" : "is-offline"}`}><span className="connection-dot" />{online ? "No device connected" : "Browser offline"}</span>
+          <span className={`connection-label ${online ? "" : "is-offline"}`} role="status" aria-live="polite" aria-atomic="true"><span className="connection-dot" aria-hidden="true" />{online ? "No device connected" : "Browser offline"}</span>
         </div>
       </header>
 
-      <main className="content" id="main-content">
+      <main className="content" id="main-content" ref={mainContentRef} tabIndex={-1}>
         {error && <div className="alert alert--error" role="alert"><Icon name="warning" /><span>{error}</span><button type="button" className="icon-button" onClick={() => setError("")} aria-label="Dismiss error"><Icon name="close" size={16} /></button></div>}
         {message && <div className="alert alert--success" role="status"><Icon name="check" /><span>{message}</span><button type="button" className="icon-button" onClick={() => setMessage("")} aria-label="Dismiss message"><Icon name="close" size={16} /></button></div>}
 
@@ -269,7 +284,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
 
     <input ref={csvInput} className="visually-hidden" type="file" accept=".csv,text/csv" onChange={onCsvChange} aria-label="Choose a ParcelSense CSV file" />
     <input ref={reportInput} className="visually-hidden" type="file" accept=".json,application/json" onChange={(event) => void importReport(event.target.files?.[0])} aria-label="Choose a pipeline evaluation report" />
-    {processing && <div className="processing-bar" role="status"><span className="processing-spinner" />Reading CSV{progress !== null ? ` · ${progress}%` : " in a background worker"}<button type="button" onClick={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }}>Cancel</button>{progress !== null && <span className="processing-progress" style={{ width: `${progress}%` }} />}</div>}
+    {processing && <div className="processing-bar" role="status" aria-live="polite" aria-atomic="true"><span className="processing-spinner" aria-hidden="true" />Reading CSV in a background worker{progress !== null && <><span aria-hidden="true">{progress}%</span><span className="processing-progress" role="progressbar" aria-label="CSV import progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-valuetext={`${progress}%`} style={{ transform: `scaleX(${progress / 100})` }} /></>}<button type="button" onClick={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }}>Cancel</button></div>}
     {pending && <ReviewDialog name={pending.name} review={pending.review} onCancel={() => setPending(null)} onSave={() => void confirmImport()} />}
   </div>;
 }
@@ -322,7 +337,7 @@ function SessionsPage({ imports, selected, samples, processing, progress, draggi
     <ImportDropzone dragging={dragging} onChoose={onChoose} onDrop={onDrop} onDrag={onDrag} compact />
     {processing && <div className="inline-progress"><span className="processing-spinner" />Processing in a background worker {progress === null ? "" : `${progress}%`}<button className="text-button" type="button" onClick={onCancelParse}>Cancel</button></div>}
     {selected ? <SessionDetail item={selected} samples={samples} onExport={onExport} onDelete={onDelete} onBack={onBack} /> : <section className="data-list-section">
-      <div className="section-heading section-heading--tight"><div><div className="eyebrow">LOCAL RECORDS · {imports.length.toString().padStart(2, "0")}</div><h2>Imported files</h2></div><span className="local-only"><span className="tiny-led" />THIS BROWSER ONLY</span></div>
+      <div className="section-heading section-heading--tight"><div><div className="eyebrow">LOCAL RECORDS · {imports.length.toString().padStart(2, "0")}</div><h2 tabIndex={-1}>Imported files</h2></div><span className="local-only"><span className="tiny-led" />THIS BROWSER ONLY</span></div>
       {imports.length ? <div className="session-list">{imports.map((item, index) => <button className="session-list-row" key={item.id} type="button" onClick={() => onOpen(item)}>
         <span className="session-row-number">{String(index + 1).padStart(2, "0")}</span><span className="session-row-icon"><Icon name="file" /></span><span className="session-row-name"><b>{item.sourceName}</b><small>Imported {formatDate(item.importedAt)} · {item.sessionIds.length} {item.sessionIds.length === 1 ? "source session" : "source sessions"}</small></span><span className="session-row-count"><b>{item.sampleCount.toLocaleString()}</b><small>VALID ROWS</small></span><span className="session-row-issues">{item.excludedCount ? <StatusPill tone="alert">{item.excludedCount} issues</StatusPill> : <StatusPill tone="good">Clean import</StatusPill>}</span><Icon name="chevron" size={17} />
       </button>)}</div> : <div className="large-empty"><EmptyMark icon="data" /><div><b>Your session archive starts here.</b><p>Import a CSV generated from the project schema. Invalid rows will be shown before anything is saved.</p></div><button className="button button--outline" type="button" onClick={onChoose}>Choose a CSV <Icon name="arrow" size={15} /></button></div>}
@@ -335,7 +350,7 @@ function SessionDetail({ item, samples, onExport, onDelete, onBack }: { item: Sa
   const labels = LABELS.map((label) => ({ label, count: samples.filter((sample) => sample.label === label).length }));
   return <section className="session-detail">
     <button className="text-button detail-back" type="button" onClick={onBack}><Icon name="chevron" size={14} />All imported files</button>
-    <div className="detail-toolbar"><div><div className="eyebrow">IMPORT REVIEW · {item.schemaVersion}</div><h2>{item.sourceName}</h2><span className="detail-meta">Imported {formatDate(item.importedAt)} · {item.sessionIds.length} source session IDs</span></div><div className="detail-actions"><button className="button button--outline" type="button" onClick={() => onExport(item, false)}><Icon name="download" size={15} />Exact values</button><button className="button button--outline" type="button" onClick={() => onExport(item, true)}>Spreadsheet-safe</button><button className="icon-button icon-button--danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.sourceName}`}><Icon name="trash" size={16} /></button></div></div>
+    <div className="detail-toolbar"><div><div className="eyebrow">IMPORT REVIEW · {item.schemaVersion}</div><h2 tabIndex={-1}>{item.sourceName}</h2><span className="detail-meta">Imported {formatDate(item.importedAt)} · {item.sessionIds.length} source session IDs</span></div><div className="detail-actions"><button className="button button--outline" type="button" onClick={() => onExport(item, false)}><Icon name="download" size={15} />Exact values</button><button className="button button--outline" type="button" onClick={() => onExport(item, true)}>Spreadsheet-safe</button><button className="icon-button icon-button--danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.sourceName}`}><Icon name="trash" size={16} /></button></div></div>
     <div className="detail-stats"><div><span>VALID ROWS</span><b>{item.sampleCount.toLocaleString()}</b></div><div><span>EXCLUDED ROWS</span><b>{item.excludedCount.toLocaleString()}</b></div><div><span>SOURCE RECORDS</span><b>{item.totalRecords.toLocaleString()}</b></div><div><span>SESSION IDS</span><b>{item.sessionIds.length.toString().padStart(2, "0")}</b></div></div>
     <div className="detail-two-col"><section className="subpanel"><div className="subpanel-heading"><div><span className="eyebrow">CLASS DISTRIBUTION</span><h3>Reviewed labels</h3></div><span>VALID ROWS</span></div>{labels.map(({ label, count }, index) => <div className="label-meter" key={label}><span className={`label-marker label-marker--${index}`} /><span>{label}</span><b>{count.toLocaleString()}</b><span className="meter-track"><i style={{ width: `${samples.length ? Math.max(count / samples.length * 100, count ? 2 : 0) : 0}%` }} /></span></div>)}<p className="muted-caption">Distribution describes imported labels; it does not describe classifier predictions.</p></section>
       <section className="subpanel"><div className="subpanel-heading"><div><span className="eyebrow">VALIDATION LOG</span><h3>{item.issues.length ? `${item.issues.length} notes` : "No exclusions"}</h3></div><span>{item.totalRecords} RECORDS</span></div>{item.issues.length ? <div className="issue-list">{item.issues.slice(0, 8).map((entry, index) => <IssueRow key={`${entry.rowNumber}-${index}`} issue={entry} />)}{item.issues.length > 8 && <div className="more-issues">+ {item.issues.length - 8} more notes saved with this import</div>}</div> : <p className="empty-note">Every imported row passed the available schema checks.</p>}</section></div>

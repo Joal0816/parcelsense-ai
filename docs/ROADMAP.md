@@ -13,4 +13,11 @@ Six phases are planned. Work stops at each genuine hardware gate until the relev
 
 ## Hardware gates
 
-Before board-dependent claims: identify exact RT-Spark revision; obtain authoritative schematic/pinout and board support configuration; inspect installed modules; verify debugger/programming access and power; record actual toolchain and build. Then test module diagnostics and capture data on the target. Never substitute synthetic samples for actual board-generated evaluation data.
+Before board-dependent claims: identify exact RT-Spark revision; obtain authoritative schematic/pinout and board support configuration; inspect installed modules; verify debugger/programming access and power; record actual toolchain and build. Then test module diagnostics and capture data on the target. Never substitute synthetic samples for actual board-generated evaluation data. Follow the detailed [board-arrival checklist](BOARD_ARRIVAL_CHECKLIST.md).
+
+## Next steps
+
+1. When the board arrives, follow `BOARD_ARRIVAL_CHECKLIST.md`: identify the board and modules, reconcile the MCU profile and memory map, then verify debugger and power before upload.
+2. Complete the Phase 3 physical diagnostics gate, then capture instructor-approved board data for Phase 4; do not use synthetic fixtures as a substitute.
+3. Once real held-out evaluation is accepted, begin Phase 5 model integration and record target latency and runtime memory.
+4. Finish Phase 6 reliability, independent trials, offline checks, and the submission evidence index. The optional PWA transport remains gated on a verified board protocol.

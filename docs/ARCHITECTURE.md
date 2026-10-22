@@ -36,6 +36,10 @@ AP3216C ambient-light readings are a secondary context modality only. Their usef
 
 Host smoke tests use temporary synthetic fixtures solely to check mechanics and C/Python parity. They are not evidence of sensor behavior or classification quality. Real board capture, performance results, label thresholds, and context-modality usefulness remain pending.
 
+## Host-testable embedded classifier boundary
+
+`firmware/include/classifier.h` defines the 24-feature C ABI expected from the host pipeline's generated `parcelsense_predict` function. `parcelsense_classify_features()` rejects a missing callback, wrong feature count, null input, non-finite feature, or out-of-range model result and leaves the output unavailable on every failure. Host tests use a deterministic callback fixture only to verify this contract; it is not a model and does not claim class quality. The adapter is not yet linked into `InferenceTask`, and `foundation_placeholder_result()` remains the only task behavior. Model integration belongs to Phase 5 after real board data and held-out evaluation.
+
 ## Constraints and limitations
 
 - Exact board revision, component population, pinout, buses, clock setup, linker script, debugger, and PlatformIO manifest are unverified.

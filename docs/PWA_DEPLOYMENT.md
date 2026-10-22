@@ -59,10 +59,11 @@ References: [Name.com: Adding a CNAME Record](https://www.name.com/support/artic
 
 ## Current release readiness
 
-- `npm test`: 9 tests pass.
+- `npm test`: 11 tests pass.
 - `npm run build`: passes; emits the static bundle, `sw.js`, manifest, and `_headers`.
-- Contrast pass: muted text colors on light surfaces were darkened and checked against the light palette; dark-hero text and semantic state colors were preserved. Compact micro-label sizing remains visually dense.
-- Local production-preview check: **PASS** in Chromium 153. The service worker controlled the page, cached all 8 app-shell files, and an offline navigation rendered the app. Desktop and 390 px mobile views were inspected with no horizontal overflow.
+- Keyboard and responsive updates: skip navigation, route/session focus, live status semantics, progress announcement, reduced-motion handling, and 44 px touch targets are implemented. The mobile nav shows all five destinations at 320 px. The impeccable detector reports no remaining findings in `App.tsx` and `styles.css`.
+- Local production-preview check: **PASS** in Chromium. A temporary synthetic fixture completed import, review, IndexedDB persistence across reload, exact export, and deletion. The service worker controlled the page, cached all 8 app-shell files, and an offline reload rendered the app. 1440, 768, 390, and 320 px viewports had no horizontal page overflow.
+- Cross-browser, screen-reader/mobile-device, actual quota pressure, and browser-eviction checks remain pending; desktop Chromium smoke coverage does not substitute for field validation.
 - Hosted preview and production checks: **PASS** at `https://preview.parcelsense-ai.pages.dev` and `https://parcelsense-ai.pages.dev`; HTTPS, security headers, manifest, worker, 8 cached assets, offline navigation, and zero external app resource requests were verified.
 - Pages production deployment: **LIVE** at `https://parcelsense-ai.pages.dev` (deployment `3825e8da-8f75-4199-97c4-1dca3c185e4f`, source commit `18907df`).
 - Custom-domain association: **ACTIVE** in Cloudflare Pages; DNS verification and HTTP certificate validation are active.
