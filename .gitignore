@@ -1,0 +1,46 @@
+# PlatformIO / embedded build output
+.pio/
+build/
+dist/
+*.elf
+*.hex
+*.bin
+*.map
+*.uf2
+*.hex
+*.o
+*.a
+*.d
+*.lst
+*.su
+
+# Python environments, bytecode, and test/tool caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local configuration, credentials, keys, and environment secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Raw recordings are sensitive and must be explicitly reviewed before tracking.
+ml/data/raw/*
+!ml/data/raw/.gitkeep
