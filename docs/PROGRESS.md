@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Phase 1 — Initialization: complete. Phase 2 — Firmware foundation: software build complete.** The STM32F407ZGT6 image compiles and links with PlatformIO, STM32CubeF4, and FreeRTOS. No upload or physical board test has been performed. See [build instructions and measured link-time sizes](BUILD.md).
+**Phase 1 — Initialization: complete. Phase 2 — Firmware foundation: software build complete. Phase 3 — Sensor interfaces: software portion complete. Phase 4 — Host ML pipeline: software portion complete.** The STM32F407ZGT6 image compiles and links with PlatformIO, STM32CubeF4, and FreeRTOS. No upload or physical board test has been performed. See [build instructions and measured link-time sizes](BUILD.md).
 
 **Phase 3 — Sensor interfaces: software portion complete; physical bring-up pending.** Typed sensor/UI APIs and safe diagnostics are present; no hardware driver or physical module test is claimed.
 
@@ -21,13 +21,21 @@
 - Runtime diagnostics retain all nine candidate modules as **UNVERIFIED** and do not call probe functions until presence is explicitly set. The diagnostic task updates this registry without accessing hardware.
 - `pio run`: **PASS** after the final interface changes. PlatformIO reports 9,956 bytes Flash and 25,640 bytes RAM; output is in `evidence/build/phase3-pio-run.log`.
 
+## Phase 4 software evidence
+
+- `ml/data/SCHEMA.md` defines required motion/session/label fields and optional context fields; `ml/data/CAPTURE_PROTOCOL.md` specifies an initial 50 Hz / 2-second procedure, pending sensor and instructor verification.
+- `ml/scripts/pipeline.py` implements validation, fault-aware windowing, 24 motion features, trial-group splitting with class minimums, threshold/tree comparison, held-out metrics, and C export.
+- `python3 -m unittest discover -s tests/ml -v`: **PASS**. Temporary `SYNTHETIC_TEST_ONLY` fixtures exercise segment breaks, leakage-safe split, report artifacts, and compiled C/Python parity. No synthetic data or model artifacts are retained in the repository.
+- `sh tools/test_host.sh`: **PASS**. A final `pio run` reattempt could not start compilation because PlatformIO could not write its lock under the read-only `/home/joal/.platformio`; there was no firmware compiler result. The prior successful Phase 3 build remains the latest successful target build, and Phase 4 did not change firmware.
+- Real board data, labeling definitions, model quality, and embedded performance are **PENDING**. Phase 5 has not started.
+
 ## Pending
 
 - RT-Spark revision, crystal/clock expectations, installed components, UART/pins, debugger, and runtime startup behavior remain unverified.
 - FreeRTOS runtime heap/stack diagnostics, scheduler behavior, and actual timing have not been observed on target.
-- Board-generated dataset, trained model, sensor diagnostics, classifier performance, and hardware tests are pending.
+- Board-generated dataset, real-data trained/selected model, sensor diagnostics, classifier performance, embedded inference, and hardware tests are pending.
 - Exact RT-Spark board revision, module population, bus and pin mapping, and physical diagnostic results are required to finish the Phase 3 hardware gate.
 
 ## Next step
 
-Finish the **Phase 3 hardware gate** by inspecting the RT-Spark revision and installed modules, verifying the official schematic/pinout and bus mappings, and checking the board clock and debugger. Then connect reviewed adapters to these interfaces and capture real module diagnostic evidence. Do not assign pins from the MCU-only foundation profile.
+When the board is available, finish the Phase 3 hardware gate by identifying the RT-Spark revision and installed modules, verifying the schematic/pinout and bus mappings, and checking the board clock/debugger. Then run module diagnostics and capture labeled real trials using the reviewed Phase 4 protocol. Only after real held-out evaluation should work move to Phase 5 embedded inference. Do not assign pins from the MCU-only foundation profile.

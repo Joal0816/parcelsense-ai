@@ -34,3 +34,10 @@ This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observ
 - The runtime module registry begins with all candidate components **UNVERIFIED** and cannot probe them until presence is established. Probe outcomes distinguish ready, absent, unprobed, and fault.
 - Host-only fixtures are under `tests/support/`; none are linked into the PlatformIO target. Host checks cover invalid readings, unavailable drivers, unknown inventory, and injected probe faults.
 - Physical component presence, module self-tests, bus/pin mapping, sensor-fault recovery, and usefulness of the secondary context modality remain **PENDING** until board inspection and bring-up.
+
+## Phase 4 software deliverables
+
+- `ml/data/SCHEMA.md` defines the CSV fields, units, labels, and invalid-row behavior; `ml/data/CAPTURE_PROTOCOL.md` records a draft safe procedure at an initial 50 Hz / 2-second window target, pending hardware and instructor verification.
+- `ml/scripts/pipeline.py` validates rows, breaks windows at invalid samples, records exclusions, extracts 24 motion features, splits by session/trial, enforces 30 train and 10 held-out windows per class, compares a median-based threshold baseline with a bounded depth-3 tree, reports confusion/per-class precision/recall/macro-F1, and exports compact C plus JSON metadata.
+- `python3 -m unittest discover -s tests/ml -v` creates only temporary `SYNTHETIC_TEST_ONLY` fixtures and checks window segmentation, group separation, artifact generation, and Python/C prediction parity. These checks do not count as a dataset or performance evidence.
+- Board-generated data, real held-out results, approved operational label definitions, verified sampling rate, and any useful context-sensor contribution remain **PENDING** until the RT-Spark and installed sensors are available.

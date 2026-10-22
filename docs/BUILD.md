@@ -11,6 +11,7 @@ From the repository root:
 ```sh
 pio run
 sh tools/test_host.sh
+python3 -m unittest discover -s tests/ml -v
 ```
 
 The build environment is `rtspark_f407zg_hsi`, using `platform = ststm32`, `framework = stm32cube`, the project board manifest, CubeF4 HAL/LL, and FreeRTOS `ARM_CM4F` plus `heap_4`. Firmware output is under `.pio/build/rtspark_f407zg_hsi/`. The linker map is `firmware.map` in that directory.
@@ -30,3 +31,7 @@ Host command: `sh tools/test_host.sh` — **PASS**. Results: `evidence/tests/pha
 ## Phase 3 interface build
 
 After adding the typed sensor interfaces and module registry, `pio run` passed again. PlatformIO reports 9,956 bytes Flash and 25,640 bytes RAM; the increase is limited to the software interface/diagnostic code and static registry. The exact output is in `evidence/build/phase3-pio-run.log`. Host tests now include validation and injected fault cases; see `evidence/tests/phase3-host-tests.log`. Both figures are link-time estimates, not on-board runtime measurements.
+
+## Phase 4 host pipeline
+
+See [ML pipeline guide](ML_PIPELINE.md) for the CSV schema, capture protocol, processing outputs, and evidence limits. The ML smoke test uses only temporary synthetic fixtures. It requires Python 3 standard library and a host C compiler for the C parity case; the compiler-specific test is skipped if `cc` is unavailable. No trained model or board dataset is committed.

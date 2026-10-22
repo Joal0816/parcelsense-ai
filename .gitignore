@@ -42,6 +42,10 @@ Thumbs.db
 *.p12
 *.pfx
 
-# Raw recordings are sensitive and must be explicitly reviewed before tracking.
+# Raw recordings and generated processed/model artifacts require explicit review.
 ml/data/raw/*
 !ml/data/raw/.gitkeep
+ml/data/processed/*
+!ml/data/processed/.gitkeep
+ml/models/*
+!ml/models/.gitkeep

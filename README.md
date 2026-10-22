@@ -1,6 +1,6 @@
 # ParcelSense AI
 
-ParcelSense AI is an offline, on-device package-handling classifier project for BCA182 Embedded Systems Programming, Laboratory Activity No. 4. Its intended target is the RT-Thread RT-Spark with STM32F407ZGT6. The Phase 2 firmware foundation builds, but has not been run on an RT-Spark board. Sensors, model inference, and serial output are not implemented.
+ParcelSense AI is an offline, on-device package-handling classifier project for BCA182 Embedded Systems Programming, Laboratory Activity No. 4. Its intended target is the RT-Thread RT-Spark with STM32F407ZGT6. The firmware foundation builds, and a host-side Phase 4 processing/export pipeline is available, but neither has been run on an RT-Spark board. Sensors, embedded model inference, and serial output are not implemented.
 
 ## Objective
 
@@ -31,6 +31,8 @@ The RT-Spark revision, installed sensors and UI, pinout, clock source, programme
 ## Getting started
 
 See [firmware build instructions](docs/BUILD.md). Run `pio run` to build the MCU foundation and `sh tools/test_host.sh` for hardware-independent checks. A successful compile does not establish RT-Spark board compatibility; do not upload until the physical board and debug interface are verified. Keep sensitive participant information and raw recordings out of Git unless explicitly reviewed and approved for sharing.
+
+The offline CSV processing steps and synthetic-only pipeline tests are described in [the ML pipeline guide](docs/ML_PIPELINE.md). Real capture requires the board and an instructor-reviewed safe labeling protocol.
 
 ## Development phases
 

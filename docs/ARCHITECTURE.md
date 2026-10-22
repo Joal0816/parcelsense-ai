@@ -30,6 +30,12 @@ Board capture produces trial/session-identified labeled records. Preprocessing s
 
 AP3216C ambient-light readings are a secondary context modality only. Their usefulness to handling classification must be demonstrated with labeled trials and a baseline comparison before inclusion in a model.
 
+## Phase 4 host pipeline
+
+`ml/scripts/pipeline.py` is an offline host tool that consumes the documented CSV schema. Invalid required samples become segment breaks; complete windows are featurized with 24 motion features. Training and held-out sets are grouped by `(session_id, trial_id)` so windows from one trial cannot leak across the split. A simple acceleration-norm-variability threshold is compared with a bounded depth-3 CART tree. The held-out report includes confusion matrix, per-class precision/recall/F1, and macro-F1. The compact tree is emitted as C with a fixed feature order recorded in JSON. No generated model is integrated into firmware in Phase 4.
+
+Host smoke tests use temporary synthetic fixtures solely to check mechanics and C/Python parity. They are not evidence of sensor behavior or classification quality. Real board capture, performance results, label thresholds, and context-modality usefulness remain pending.
+
 ## Constraints and limitations
 
 - Exact board revision, component population, pinout, buses, clock setup, linker script, debugger, and PlatformIO manifest are unverified.
