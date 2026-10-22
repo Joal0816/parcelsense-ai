@@ -85,16 +85,20 @@ Proposed repository boundary: a new top-level `frontend/` directory containing t
 4. **Adapters:** CSV parser/exporter, evaluation JSON reader, browser persistence, and a future `DeviceTransport` interface.
 5. **PWA shell:** manifest, service worker, offline fallback, app-shell cache, and update notification.
 
-The first transport adapter is file import/export. A later live adapter must implement an explicit capability contract and return verified connection state, data frames, disconnect/error events, and protocol version. Select USB/Bluetooth/etc. only after the RT-Spark board revision, firmware support, and target browsers have been verified. Do not build a speculative transport into the initial release.
+The first transport adapter is file import/export. A later live adapter must implement an explicit capability contract and return verified connection state, data frames, disconnect/error events, and protocol version. Keep it behind the application boundary: screens consume normalized session/sample events and do not contain transport-specific logic. File import, review, evaluation, and export must work with no device adapter. Select USB/Bluetooth/etc. only after the RT-Spark board revision, firmware support, and target browsers have been verified. Do not build a speculative transport into the initial release.
 
 ### Local persistence and offline behavior
 
 - Cache the static application shell and versioned UI assets so previously installed app screens open offline.
+- Show **Offline ready** only after the app shell has been successfully cached. Distinguish first-load, update-in-progress, cache-failed, and offline-ready states. If first load or caching fails, explain that offline launch is not ready and offer retry when online.
 - Store user-selected sessions and reports in browser-local structured storage (IndexedDB is the leading option); keep large recordings out of transient component state.
 - Keep raw data out of service-worker caches and network requests. Do not upload, synchronize, or include analytics by default.
-- Show storage usage/retention limitations when possible; let the user export before deletion and delete one session or all local project data.
+- Show storage usage/retention limitations when the browser exposes them. The app may request persistent storage, but must report whether the request is unsupported, denied, or granted and must not imply local records are guaranteed to survive device cleanup.
+- On a quota/write failure, keep the source file untouched, preserve successfully saved records, explain what was not saved, and offer export/free-space/retry actions. Never remove older data automatically to make room.
+- If local records are missing after browser reset or eviction, show a recovery state with instructions to re-import the user's saved source file. Never reconstruct or fabricate records.
+- Let the user export before deletion and delete one session or all local project data.
 - Treat browser storage as best-effort, not as the authoritative archive. Preserve original CSV separately at the user's direction.
-- Apply service-worker updates deliberately and explain when a new app version will take effect; do not discard in-progress review state.
+- Apply service-worker updates deliberately and explain when a new app version will take effect; do not discard in-progress review state. If update installation or cache migration fails, retain the last working shell where possible and provide a retry path.
 
 Offline acceptance means the installed app shell and previously saved local records remain usable with network access disabled. It does not mean a disconnected browser can receive new samples from the STM32.
 
@@ -106,7 +110,22 @@ Offline acceptance means the installed app shell and previously saved local reco
 - Mark imported records with source filename, import time, schema version, validation outcome, and user-visible provenance; avoid exposing local absolute paths unnecessarily.
 - Evaluation screens must retain split grouping and real/synthetic provenance from reports. If origin is missing, display “Unknown”; do not infer real data from file names.
 - CSV export must neutralize spreadsheet formula prefixes in text fields or warn and produce a safe export, while retaining a way to preserve exact source values.
-- Limit file size/row count or process large inputs incrementally; communicate limits and failures before the browser becomes unresponsive.
+- Parse large imports incrementally or in a Web Worker so parsing does not block interaction; provide progress, cancellation, and a clear partial-import policy. Establish a tested file-size/row-count limit on supported target devices before release. If streaming/Worker support is unavailable, enforce a smaller synchronous limit and explain it before processing.
+
+## Failure states and recovery behavior
+
+| Trigger | User-visible behavior | Recovery rule |
+|---|---|---|
+| First launch while offline before the shell was cached | Explain that the app is not yet offline-ready; show a retry state instead of a broken screen. | Open once while online to finish caching, then verify the offline-ready indicator. |
+| Service-worker cache or update fails | Keep the current page usable if possible and identify the app version/update state. | Retry later; never clear the last working cache or abandon an in-progress review silently. |
+| CSV has unsupported schema or malformed rows | Show file-level errors separately from row exclusions, including line and reason where available. | Let the user cancel or import valid portions only after showing the proposed exclusion count; retain the untouched original file. |
+| CSV exceeds tested device limits | Reject before expensive processing or offer incremental processing with progress and cancellation. | Do not freeze the interface or claim a partial import is complete. |
+| Local storage quota is exceeded or a write fails | Identify unsaved session/report data and offer export, user-selected deletion, and retry. | Never remove existing records automatically to make room. |
+| Browser storage was cleared or evicted | Show that local records are unavailable and explain re-import from the user's saved source file. | Do not infer or recreate previously stored samples. |
+| Device transport disconnects or sends invalid frames (if F4 is built) | Mark connection and affected trial state; show last confirmed sample time and an explicit fault. | Apply only the board-verified stop/resume policy; do not join records across a gap without a protocol rule. |
+| Report provenance is absent or inconsistent | Mark provenance as unknown and warn before displaying metrics. | Do not describe results as real board performance. |
+
+For spreadsheet use, offer two clearly named exports when needed: **exact data export** and **spreadsheet-safe export**. The safe version detects text cells beginning with formula prefixes such as `=`, `+`, `-`, or `@`, neutralizes them under a documented rule, and tells the user the exported representation changed. Keep original imported values available in the app and provide exact export for analysis workflows.
 
 ## UX, accessibility, and visual direction
 
@@ -137,13 +156,14 @@ Offline acceptance means the installed app shell and previously saved local reco
 | **F2 — File workspace** | CSV import, validation, session/trial review, exclusions, local persistence, export/delete. | Tests cover valid, malformed, oversized, invalid-sample, unknown-label, and conflicting-trial input; original data remains unchanged. |
 | **F3 — Evaluation reports** | Read pipeline JSON and present results/provenance clearly. | Fixtures verify label order, metric values, missing metrics, synthetic warning, and unknown provenance behavior. No performance claim from synthetic fixtures. |
 | **F4 — Verified device transport (optional)** | Implement a transport adapter only after board/firmware protocol and browser compatibility are known. | Board revision and transport are documented; connect/disconnect/fault behavior is tested; live data matches firmware logs and schema. |
-| **F5 — Field validation and release** | User testing, offline/update checks, privacy/accessibility review, and reproducible static release. | Offline use, data deletion/export, supported browser matrix, accessibility checks, and release artifacts documented. |
+| **F5 — Field validation and release** | User testing, offline/update checks, privacy/accessibility review, and reproducible static release. | Offline use, storage quota/eviction recovery, data deletion/export, supported browser/device matrix, accessibility checks, and release artifacts documented. |
 
 ## Test and acceptance plan
 
 - **Unit:** schema parsing, timestamp wrap/gap handling, label validation, provenance, report parsing, and safe export.
 - **Integration:** import → inspect → persist → reload offline → export; report import → evaluation rendering; delete one/all sessions.
 - **PWA:** install/update lifecycle, first-load and repeat-load offline behavior, cache version changes, and recovery from interrupted updates.
+- **Storage and scale:** representative file sizes on supported mobile/desktop devices, quota failures, browser-cleared storage, canceled large imports, and recovery without losing the source file.
 - **Security:** malformed/large files, HTML/script-like strings, spreadsheet formula fields, no unexpected network requests, and storage deletion.
 - **Accessibility:** keyboard walkthrough, screen-reader labels and announcements, focus order, contrast, zoom/reflow, and non-color status communication.
 - **Transport, if later added:** permission denial, unavailable API, connect/disconnect, malformed frame, timestamp gap, sensor fault, and interrupted trial against actual board evidence.
@@ -155,10 +175,10 @@ Offline acceptance means the installed app shell and previously saved local reco
 |---|---|
 | No board is currently available; its communication capabilities are unknown | Keep file workflows first; leave live capture disabled until hardware and protocol are verified. |
 | Actual labels and safe handling actions need instructor approval | Use the documented draft protocol; do not put force thresholds or unsafe trial instructions into the UI. |
-| Browser storage limits and eviction vary | Warn users, provide exports/deletion, and avoid promising archival durability. |
-| Large CSV parsing can block a mobile browser | Measure with representative real files when available; stream or move parsing off the UI thread if needed. |
+| Browser storage limits and eviction vary | Report persistence request state and storage limits when available, provide export/deletion/re-import recovery, and avoid promising archival durability. |
+| Large CSV parsing can block a mobile browser | Use incremental/Worker parsing with progress and cancellation; benchmark representative real files on each supported target and enforce a tested fallback limit. |
 | Evaluation report schema may evolve | Version the report and reject unsupported versions with actionable errors. |
-| PWA install and device APIs differ by platform | Choose supported browsers during F0 and verify install/offline behavior there; keep core file workflows independent of optional APIs. |
+| PWA install, cache behavior, and device APIs differ by platform | Choose supported browser/device combinations during F0; test install, offline cache, storage pressure, and file behavior on each; keep core file workflows independent of optional APIs. |
 | Embedded and PWA status may be confused | Keep device state, sensor/data quality, and model output separate and provenance-marked. |
 
 ## Immediate next steps
