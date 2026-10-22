@@ -3,6 +3,10 @@
 /build/
 firmware/build/
 dist/
+node_modules/
+**/node_modules/
+**/.vite/
+*.tsbuildinfo
 *.elf
 *.hex
 *.bin

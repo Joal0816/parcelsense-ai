@@ -29,6 +29,15 @@
 - `sh tools/test_host.sh`: **PASS**. A final `pio run` reattempt could not start compilation because PlatformIO could not write its lock under the read-only `/home/joal/.platformio`; there was no firmware compiler result. The prior successful Phase 3 build remains the latest successful target build, and Phase 4 did not change firmware.
 - Real board data, labeling definitions, model quality, and embedded performance are **PENDING**. Phase 5 has not started.
 
+## Optional frontend/PWA workstream
+
+- The initial ParcelSense Field Desk app is implemented in `frontend/`: local CSV review, browser storage/export, pipeline report review, install metadata, and an app-shell service worker. This companion does not change the embedded phase status or provide board connectivity.
+- `cd frontend && npm test`: **PASS**, 9 tests. `npm run build`: **PASS**; production bundle, manifest, service worker, and security headers are generated.
+- The `parcelsense-ai` Cloudflare Pages Direct Upload project is live at `https://parcelsense-ai.pages.dev`. Hosted production HTTPS, security headers, manifest, service-worker cache, offline navigation, and no-external-resource behavior were verified in Chromium.
+- The custom domain `parcelsense.joalvergs.tech` is associated with the Pages project but awaits a Name.com CNAME: host `parcelsense`, target `parcelsense-ai.pages.dev`, TTL 300. Name.com nameservers are authoritative; no DNS record was changed because no Name.com account/API connection is available here. Custom-domain HTTPS/TLS verification remains pending.
+- Muted-text contrast was improved and checked against light surfaces; keyboard/screen-reader and cross-browser field checks remain pending.
+- Deployment commands, DNS guidance, and current blockers are recorded in [PWA deployment](PWA_DEPLOYMENT.md).
+
 ## Pending
 
 - RT-Spark revision, crystal/clock expectations, installed components, UART/pins, debugger, and runtime startup behavior remain unverified.

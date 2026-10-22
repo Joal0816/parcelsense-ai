@@ -1,6 +1,6 @@
 # ParcelSense Companion Frontend and PWA Plan
 
-**Status: Plan only.** No web frontend, PWA, browser storage, or board-to-browser transport is implemented. This is a separate companion-product plan; it does not change the six embedded-system phases or claim board connectivity. The embedded classifier remains the primary product and must operate without this PWA.
+**Status: Initial F1–F3 companion implementation available in `frontend/`; field validation remains open.** The local-first shell, CSV review, browser storage/export, and pipeline report view are implemented as a separate companion product. PWA install/offline behavior and supported-device accessibility still require validation. Board-to-browser transport, live capture, and hardware diagnostics are not implemented; this does not change the six embedded-system phases or claim board connectivity. The embedded classifier remains the primary product and must operate without this PWA.
 
 ## Purpose and product boundary
 
@@ -73,9 +73,9 @@ If the connection drops, stop or mark the trial according to the verified protoc
 
 ### Suggested application stack
 
-Use a small TypeScript PWA with a component-based UI, static build output, and service-worker-managed app-shell caching. A Vite-based setup with React is a reasonable starting option for the screen structure and reusable tables/forms; a smaller vanilla TypeScript app is also viable if bundle size and dependency count are more important. Choose the final stack after a short prototype verifies offline lifecycle, local file handling, accessibility, and browser needs. Review current package maintenance, licensing, and security before adding dependencies. No packages are installed as part of this plan.
+Use a small TypeScript PWA with a component-based UI, static build output, and service-worker-managed app-shell caching. The user selected Vite + React + TypeScript. Review current package maintenance, licensing, and security before adding dependencies.
 
-Proposed repository boundary: a new top-level `frontend/` directory containing the app, tests, and its own build documentation. It should not be added to the firmware PlatformIO source or linked into the target image. A generated static bundle can be hosted from a local workstation or static host; the app itself should not require a backend.
+Proposed repository boundary: a new top-level `frontend/` directory containing the app, tests, and its own build documentation. It should not be added to the firmware PlatformIO source or linked into the target image. The user selected both localhost and hosted HTTPS use, with Cloudflare Pages as the hosted target. The recommended hostname is `parcelsense.joalvergs.tech`; DNS setup is documented in [PWA deployment](PWA_DEPLOYMENT.md). The app itself should not require a backend.
 
 ### Layers
 
@@ -183,7 +183,7 @@ For spreadsheet use, offer two clearly named exports when needed: **exact data e
 
 ## Immediate next steps
 
-1. Review this plan and decide whether the PWA should be an operator tool, an instructor/demo interface, or both.
-2. Sketch F1–F3 screens and finalize the evaluation-report JSON contract before adding frontend dependencies.
-3. When the board arrives, finish the hardware inventory and module diagnostics, then decide whether F4 live transport is supported and worthwhile.
-4. Implement the PWA as a separate workstream; keep embedded Phases 3–6 and their evidence gates authoritative for hardware claims.
+1. Verify production-preview offline install, reload, and app-shell recovery in each supported browser.
+2. Exercise CSV edge cases, IndexedDB quota failure, deletion, export, and malformed evaluation reports with representative project files.
+3. Run keyboard, screen-reader, contrast, zoom, and mobile reflow checks before release.
+4. When the board arrives, finish hardware inventory and module diagnostics, then decide whether optional F4 live transport is supported and worthwhile. Keep embedded Phases 3–6 and their evidence gates authoritative for hardware claims.

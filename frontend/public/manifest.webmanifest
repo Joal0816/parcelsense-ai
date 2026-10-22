@@ -1,0 +1,14 @@
+{
+  "name": "ParcelSense Field Desk",
+  "short_name": "ParcelSense",
+  "description": "Offline local workspace for ParcelSense handling-session review.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f3ed",
+  "theme_color": "#163b36",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
