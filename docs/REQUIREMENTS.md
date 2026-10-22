@@ -26,3 +26,11 @@ This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observ
 - Phase 2 source contains four FreeRTOS tasks, two bounded queues, task notifications, the ARM_CM4F port, and heap_4; `pio run` links the image.
 - Host tests cover invalid/unavailable classification output and bounded logging. No hardware behavior is accepted from a host test or cross-compile.
 - Flash/RAM evidence distinguishes PlatformIO's report, ELF sections and runtime measurements. FreeRTOS heap and stack high-water values remain runtime-only diagnostics.
+
+## Phase 3 software deliverables
+
+- Typed callback interfaces describe IMU, AP3216C light/proximity, AHT10 environment, display, indicators, buzzer, and buttons without assigning a bus or pin.
+- Samples include timestamp, units, validity, and status. Read wrappers clear outputs and propagate transport and invalid-data errors.
+- The runtime module registry begins with all candidate components **UNVERIFIED** and cannot probe them until presence is established. Probe outcomes distinguish ready, absent, unprobed, and fault.
+- Host-only fixtures are under `tests/support/`; none are linked into the PlatformIO target. Host checks cover invalid readings, unavailable drivers, unknown inventory, and injected probe faults.
+- Physical component presence, module self-tests, bus/pin mapping, sensor-fault recovery, and usefulness of the secondary context modality remain **PENDING** until board inspection and bring-up.

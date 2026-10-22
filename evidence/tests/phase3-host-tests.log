@@ -1,0 +1,3 @@
+Command: sh tools/test_host.sh
+PASS: validation, explicit test fixtures, safe unverified inventory, module faults, and log buffer
+Exit status: 0

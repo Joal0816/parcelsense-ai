@@ -26,3 +26,7 @@ PlatformIO reports 9,524 bytes Flash and 25,380 bytes RAM. The ELF section repor
 The linker emits expected newlib syscall warnings (`_read`, `_write`, `_close`, `_lseek` are unimplemented) because this foundation has no console, plus an RWX load-segment warning from the inherited STM32 linker layout. The build has three CubeF4 `-Wextra` unused-parameter warnings. These warnings do not prevent the image from linking. Review memory sections and these warnings if adding console, bootloader, or MPU requirements.
 
 Host command: `sh tools/test_host.sh` — **PASS**. Results: `evidence/tests/phase2-host-tests.log`. This test covers the unavailable-classification contract and log-buffer empty/full/wrap behavior; it does not exercise FreeRTOS scheduling or hardware.
+
+## Phase 3 interface build
+
+After adding the typed sensor interfaces and module registry, `pio run` passed again. PlatformIO reports 9,956 bytes Flash and 25,640 bytes RAM; the increase is limited to the software interface/diagnostic code and static registry. The exact output is in `evidence/build/phase3-pio-run.log`. Host tests now include validation and injected fault cases; see `evidence/tests/phase3-host-tests.log`. Both figures are link-time estimates, not on-board runtime measurements.

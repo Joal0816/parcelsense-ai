@@ -4,6 +4,7 @@
 #include "task.h"
 #include "foundation.h"
 #include "log_buffer.h"
+#include "hardware/module_diagnostics.h"
 
 typedef struct {
     uint32_t completed_heartbeats;
@@ -14,5 +15,6 @@ typedef struct {
 
 extern LogBuffer g_log_buffer;
 extern volatile DiagnosticSnapshot g_diagnostics;
+extern ModuleDiagnosticRegistry g_module_diagnostics;
 void app_tasks_start(void);
 #endif

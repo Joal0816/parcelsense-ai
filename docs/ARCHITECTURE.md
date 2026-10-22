@@ -22,6 +22,14 @@ The GCC `ARM_CM4F` port owns SVC, PendSV, and SysTick. SysTick is the 1 kHz Free
 
 Board capture produces trial/session-identified labeled records. Preprocessing splits data by trial/session to reduce leakage, compares a simple threshold baseline with compact candidates, and exports fixed preprocessing parameters with the chosen model. Host parity checks support model integration; final performance claims require held-out real board trials. Synthetic samples, if later used, are limited to clearly labeled pipeline smoke tests.
 
+## Phase 3 interface boundary
+
+`firmware/include/hardware/sensors.h` defines typed ICM20608, AP3216C, and AHT10 interfaces and samples. Timestamps are caller-supplied monotonic milliseconds; motion units are m/s² and rad/s, ambient light is lux, proximity is reported as device counts, and humidity is percent. Read wrappers clear outputs before calling an adapter, propagate transport errors, and reject invalid or non-finite readings. No adapter selects an I²C/SPI bus or performs a physical transaction.
+
+`hardware/ui.h` defines display, indicator, buzzer, and button callbacks. A future adapter maps `UiClassification` to the model's handling state; this phase does not perform that mapping or drive an output. `module_diagnostics.h` keeps an explicit presence state separate from diagnostic health. Its initial inventory remains UNVERIFIED. The scheduler's diagnostic task records that state without probing hardware; later board setup must establish presence from evidence before a probe callback can run. Candidate probe failures are surfaced as faults and counters. Host fixtures live under `tests/support/` and are excluded from PlatformIO firmware compilation.
+
+AP3216C ambient-light readings are a secondary context modality only. Their usefulness to handling classification must be demonstrated with labeled trials and a baseline comparison before inclusion in a model.
+
 ## Constraints and limitations
 
 - Exact board revision, component population, pinout, buses, clock setup, linker script, debugger, and PlatformIO manifest are unverified.

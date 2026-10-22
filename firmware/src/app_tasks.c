@@ -6,6 +6,7 @@ static QueueHandle_t feedback_queue;
 static TaskHandle_t sensor_task, inference_task, feedback_task, diagnostic_task;
 LogBuffer g_log_buffer;
 volatile DiagnosticSnapshot g_diagnostics;
+ModuleDiagnosticRegistry g_module_diagnostics;
 
 enum { LOG_FEEDBACK_UNAVAILABLE = 1, LOG_HEAP_MINIMUM = 2 };
 
@@ -63,6 +64,9 @@ static void DiagnosticTask(void *argument)
         /* Notifications count completed placeholders; timeout allows idle checks. */
         uint32_t completed = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
         g_diagnostics.completed_heartbeats += completed;
+        /* No board inventory or verified probe exists yet; keep candidates UNVERIFIED. */
+        module_diagnostics_run(&g_module_diagnostics, NULL, NULL,
+                               (uint32_t)xTaskGetTickCount());
         g_diagnostics.minimum_free_heap = xPortGetMinimumEverFreeHeapSize();
         g_diagnostics.stack_free_words[0] = uxTaskGetStackHighWaterMark(sensor_task);
         g_diagnostics.stack_free_words[1] = uxTaskGetStackHighWaterMark(inference_task);
@@ -74,6 +78,7 @@ static void DiagnosticTask(void *argument)
 
 void app_tasks_start(void)
 {
+    module_diagnostics_init(&g_module_diagnostics);
     /* Single-slot latest-value mailboxes: bounded RAM, no stale backlog. */
     sensor_queue = xQueueCreate(1U, sizeof(SensorHeartbeat));
     feedback_queue = xQueueCreate(1U, sizeof(FoundationResult));

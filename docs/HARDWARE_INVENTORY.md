@@ -2,6 +2,8 @@
 
 Target stated by the project: **RT-Thread RT-Spark, STM32F407ZGT6**. The physical board has not been inspected in this phase. Every component entry is therefore **UNVERIFIED**; names below are candidates from the project brief/workflow, not claims of board population.
 
+Phase 3 added type-safe software interfaces for the candidate IMU, light/proximity sensor, temperature/humidity sensor, display, indicators, buzzer, and buttons. The runtime inventory defaults to UNVERIFIED and does not issue a bus probe for those entries. This software inventory is not a physical diagnostic result.
+
 | Candidate component | Presence | Revision / part marking | Bus / address | Pin mapping | Diagnostic result | Notes |
 |---|---|---|---|---|---|---|
 | STM32F407ZGT6 MCU | UNVERIFIED | UNVERIFIED | N/A | N/A | UNVERIFIED | Confirm package/board revision from markings and authoritative documentation. |
