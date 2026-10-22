@@ -45,6 +45,8 @@ Name.com only serves these DNS records when the domain is using Name.com's names
 
 Cloudflare Pages now reports the custom domain, DNS verification, and HTTP validation as active. Public resolvers return the expected CNAME, and HTTPS responds with HTTP 200. The PWA must be served from HTTPS when hosted; localhost is appropriate for local development.
 
+If a device still reports `ERR_NAME_NOT_RESOLVED` after DNS is active, it may have cached the previous NXDOMAIN response. On Linux systems using systemd-resolved, clear the system DNS cache with `sudo resolvectl flush-caches`; in Chromium, clear the host cache at `chrome://net-internals/#dns` or fully restart the browser.
+
 ## Name.com steps
 
 1. Sign in to Name.com and open **My Domains**.
