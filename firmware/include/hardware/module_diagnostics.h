@@ -53,6 +53,11 @@ typedef struct {
 
 typedef ParcelStatus (*ModuleProbeFn)(void *context, ModuleId id);
 
+/* Mutable operations have a single owner: initialize before scheduling, then
+ * call set_presence/run from DiagnosticTask only. Other tasks must not inspect
+ * entries while that owner updates them without an explicit snapshot/lock.
+ * Callbacks run in task context, never from an ISR. A NULL probe for a module
+ * marked PRESENT is reported as NOT_PROBED / NOT_INITIALIZED. */
 void module_diagnostics_init(ModuleDiagnosticRegistry *registry);
 const ModuleDiagnostic *module_diagnostics_get(
     const ModuleDiagnosticRegistry *registry, ModuleId id);

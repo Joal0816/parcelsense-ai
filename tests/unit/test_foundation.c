@@ -88,6 +88,7 @@ int main(void)
                                            MODULE_PRESENCE_PRESENT) == PARCEL_STATUS_OK);
     module_diagnostics_run(&registry, NULL, NULL, 150U);
     assert(module_diagnostics_get(&registry, MODULE_ICM20608_IMU)->health == MODULE_HEALTH_NOT_PROBED);
+    assert(module_diagnostics_get(&registry, MODULE_ICM20608_IMU)->last_status == PARCEL_STATUS_NOT_INITIALIZED);
     module_diagnostics_run(&registry, mock_module_probe, &mock, 200U);
     const ModuleDiagnostic *imu = module_diagnostics_get(&registry, MODULE_ICM20608_IMU);
     assert(mock.probe_calls == 1U && mock.last_module == MODULE_ICM20608_IMU);
