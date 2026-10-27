@@ -35,15 +35,15 @@ The custom domain is associated with the Pages project. The confirmed CNAME targ
 
 `.github/workflows/ci.yml` runs on pull requests to `master`, pushes to `master`, and manual dispatches. The workflow checks the PWA, runs its browser integration and Chromium/Firefox readiness suites, tests the local API and ML pipeline, runs firmware host tests, and compiles the STM32 firmware without requiring a board. The production deployment waits for every check, deploys the exact PWA bundle produced by the passing web job, and verifies the custom domain serves that bundle, install manifest, service worker, and security headers.
 
-The repository is private at <https://github.com/Joal0816/parcelsense-ai>, with `master` as its pushed branch. The `production` Actions environment has been created.
+The repository is private at <https://github.com/Joal0816/parcelsense-ai>, with `master` as its pushed branch. The `production` Actions environment has been created, and `CLOUDFLARE_ACCOUNT_ID` is configured there.
 
 To finish the production release:
 
-1. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as secrets in the repository's `production` environment. Create an account API token with **Cloudflare Pages: Edit** permission, scoped to the account containing `parcelsense-ai`.
+1. Add `CLOUDFLARE_API_TOKEN` as a secret in the repository's `production` environment. Create an account API token with **Cloudflare Pages: Edit** permission, scoped to the account containing `parcelsense-ai`.
 2. Re-run the `ParcelSense CI and CD` workflow on `master`. The deploy job publishes the verified bundle and checks the production hostname afterward.
 3. Protect `master` with required checks for **Web checks and browser readiness**, **Backend and ML tests**, **Firmware host tests**, and **STM32 firmware compile**.
 
-The first Actions run (#40572216575) passed all four CI jobs and stopped at the Cloudflare-secret preflight. The production environment exists but contains neither required secret yet. Do not put either Cloudflare value in the repository or commit it to source control.
+The first Actions run ([#40572216575](https://github.com/Joal0816/parcelsense-ai/actions/runs/40572216575)) passed all four CI jobs and stopped at the Cloudflare-secret preflight. The tested artifact was uploaded manually with Wrangler, and the production hostname passed the same bundle verifier. Only the API token is still missing for automated deployments. Never put the token in the repository or commit it to source control.
 
 ## Name.com DNS record
 
@@ -81,7 +81,8 @@ References: [Name.com: Adding a CNAME Record](https://www.name.com/support/artic
 - Hosted preview and production checks: **PASS** at `https://preview.parcelsense-ai.pages.dev` and `https://parcelsense-ai.pages.dev`; HTTPS, security headers, manifest, worker, 8 cached assets, and offline navigation were verified.
 - Latest Pages production deployment: **LIVE** at `https://parcelsense-ai.pages.dev` and `https://parcelsense.joalvergs.tech` (deployment `f9cddb6d-22d9-40d9-8108-195c14240d1a`, production branch `master`, source commit `8f4a0ee5e782ce8674bd8d77c71109ba0ef84138`). The previous production release is superseded.
 - The corresponding preview release is live at `https://preview.parcelsense-ai.pages.dev` (deployment URL `https://3a7db280.parcelsense-ai.pages.dev`). Both production hosts and the immutable deployment URL returned HTTP 200 and served the new JavaScript/CSS bundle. The manifest, service worker, `_headers`, and new bundle assets all returned HTTP 200.
-- Current checkout comparison (2026-10-28): the custom domain still returns HTTP 200 and the expected security headers, but serves `index-DIDl3Fh1.js` and `index-DfcPmeKM.css`; the current tested build references `index-Y6spORdI.js` and `index-7YNUYjZC.css`. `npm run verify:production` correctly fails against the existing release because it is not the current checkout's bundle. Publishing the updated bundle is pending Cloudflare deployment credentials and a successful hosted deploy run.
+- Latest PWA release: the exact `frontend-dist` artifact from successful Actions web job #40572216575 was uploaded to the Pages `master` production branch as deployment `https://9f084af4.parcelsense-ai.pages.dev`, associated with commit `148a6409acce7c8dd573b7d7577c830a2fb0eca6`.
+- Post-deploy check (2026-10-28): `npm run verify:production` passed against `https://parcelsense.joalvergs.tech`. The custom domain served the expected `index-Y6spORdI.js` and `index-7YNUYjZC.css`, manifest, service worker, and security headers. GitHub Actions automation awaits the scoped Cloudflare API token in its `production` environment.
 - Post-deploy Chromium verification on the custom domain confirmed the service worker controlled the app, cached all 8 app-shell files, and served the app after a network-disabled reload. This verifies the browser shell only; embedded inference remains independent and hardware testing is still pending.
 - Custom-domain association: **ACTIVE** in Cloudflare Pages; DNS verification and HTTP certificate validation are active.
 - Name.com authoritative DNS and public resolvers return `parcelsense.joalvergs.tech CNAME parcelsense-ai.pages.dev` with TTL 300. HTTPS responds with HTTP 200, and a Chromium test confirmed service-worker installation and offline shell navigation on the custom hostname. The test environment had cached the earlier NXDOMAIN, so Chromium used a host override to the Cloudflare Pages IP while public DNS propagated.
