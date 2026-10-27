@@ -140,9 +140,16 @@ jobs:
           fi
 
       - name: Deploy to Cloudflare Pages
+        id: pages-deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy frontend/dist --project-name=parcelsense-ai
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify production custom domain serves this build
+        working-directory: frontend
+        env:
+          PARCELSENSE_PRODUCTION_URL: https://parcelsense.joalvergs.tech/
+        run: npm run verify:production

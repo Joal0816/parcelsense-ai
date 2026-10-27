@@ -11,7 +11,8 @@
     "typecheck": "tsc -b --pretty false",
     "test": "node --experimental-strip-types tests/run.test.ts",
     "e2e:local-api": "node scripts/e2e-local-api.mjs",
-    "e2e:readiness": "npm run build && node scripts/e2e-readiness.mjs"
+    "e2e:readiness": "npm run build && node scripts/e2e-readiness.mjs",
+    "verify:production": "node scripts/verify-production.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
