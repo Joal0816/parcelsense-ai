@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { LABELS, type CsvReview, type ImportIssue, type MotionSample, type SavedEvaluation, type SavedSession } from "./domain.ts";
 import { parseMotionCsv } from "./lib/csv.ts";
+import { deleteBackendSession, getBackendHealth, getBackendSessions, getSyntheticDemoCsv, uploadReviewedSession, type BackendHealth, type BackendSession } from "./lib/backend.ts";
 import { deleteEvaluation, deleteImport, downloadText, getErrorMessage, getImportSamples, listEvaluations, listImports, makeSafeCsv, saveEvaluation, saveImport, validateEvaluation } from "./lib/storage.ts";
 
 type Page = "overview" | "sessions" | "evaluation" | "device" | "settings";
@@ -65,7 +66,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const [online, setOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
   const [imports, setImports] = useState<SavedSession[]>([]);
   const [evaluations, setEvaluations] = useState<SavedEvaluation[]>([]);
-  const [pending, setPending] = useState<{ name: string; review: CsvReview } | null>(null);
+  const [pending, setPending] = useState<{ name: string; review: CsvReview; dataOrigin: "synthetic" | "unknown" } | null>(null);
   const [selected, setSelected] = useState<SavedSession | null>(null);
   const [selectedSamples, setSelectedSamples] = useState<MotionSample[]>([]);
   const [report, setReport] = useState<SavedEvaluation | null>(null);
@@ -77,6 +78,11 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const [deleting, setDeleting] = useState(false);
   const [storageInfo, setStorageInfo] = useState<{ supported: boolean; persistent?: boolean; usage?: number; quota?: number }>({ supported: false });
   const [requestingPersistence, setRequestingPersistence] = useState(false);
+  const [backendState, setBackendState] = useState<{ available: boolean; health?: BackendHealth; sessions: BackendSession[]; error?: string }>({ available: false, sessions: [] });
+  const [backendRefreshing, setBackendRefreshing] = useState(false);
+  const [backendUploadId, setBackendUploadId] = useState<string | null>(null);
+  const [backendDeleteId, setBackendDeleteId] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const previousPageRef = useRef(page);
   const previousSelectionRef = useRef(selected?.id);
@@ -102,7 +108,22 @@ function App({ offlineReady }: { offlineReady: boolean }) {
     } catch (reason) { setError(getErrorMessage(reason)); }
   };
 
+  async function refreshBackend() {
+    if (!import.meta.env.DEV) {
+      setBackendState({ available: false, sessions: [], error: "The local API is available only with the development server." });
+      return;
+    }
+    setBackendRefreshing(true);
+    try {
+      const [health, sessions] = await Promise.all([getBackendHealth(), getBackendSessions()]);
+      setBackendState({ available: health.status === "ok", health, sessions });
+    } catch (reason) {
+      setBackendState({ available: false, sessions: [], error: getErrorMessage(reason) });
+    } finally { setBackendRefreshing(false); }
+  }
+
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => { void refreshBackend(); }, []);
   useEffect(() => {
     if (previousPageRef.current === page) return;
     previousPageRef.current = page;
@@ -142,7 +163,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const totalExcluded = useMemo(() => imports.reduce((sum, item) => sum + item.excludedCount, 0), [imports]);
   const pageName = page === "overview" ? "Field desk" : PAGES.find((item) => item.id === page)?.name ?? "Settings";
 
-  function beginCsv(file?: File) {
+  function beginCsv(file?: File, dataOrigin: "synthetic" | "unknown" = "unknown") {
     if (!file) return;
     setError(""); setMessage(""); setPending(null);
     if (!file.name.toLowerCase().endsWith(".csv")) { setError("Choose a .csv file generated from the ParcelSense dataset schema."); return; }
@@ -150,7 +171,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
     if (!("Worker" in window)) {
       if (file.size > 2 * 1024 * 1024) { setError("This browser cannot run the CSV worker. For now, its fallback is limited to 2 MiB; the original file is unchanged."); return; }
       setProcessing(true); setProgress(null);
-      void file.text().then((text) => setPending({ name: file.name, review: parseMotionCsv(text) })).catch(() => setError("The selected file could not be read.")).finally(() => setProcessing(false));
+      void file.text().then((text) => setPending({ name: file.name, review: parseMotionCsv(text), dataOrigin })).catch(() => setError("The selected file could not be read.")).finally(() => setProcessing(false));
       return;
     }
     workerRef.current?.terminate();
@@ -159,7 +180,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
     worker.onmessage = (event: MessageEvent<{ type: string; loaded?: number; total?: number; message?: string; review?: CsvReview }>) => {
       if (event.data.type === "progress" && event.data.loaded !== undefined && event.data.total) setProgress(Math.round((event.data.loaded / event.data.total) * 100));
       if (event.data.type === "complete" && event.data.review) {
-        setPending({ name: file.name, review: event.data.review }); setProcessing(false); worker.terminate(); workerRef.current = null;
+        setPending({ name: file.name, review: event.data.review, dataOrigin }); setProcessing(false); worker.terminate(); workerRef.current = null;
       }
       if (event.data.type === "error") { setError(event.data.message ?? "Import failed."); setProcessing(false); worker.terminate(); workerRef.current = null; }
     };
@@ -173,10 +194,44 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   async function confirmImport() {
     if (!pending) return;
     try {
-      const saved = await saveImport(crypto.randomUUID(), pending.name, pending.review);
+      const saved = await saveImport(crypto.randomUUID(), pending.name, pending.review, pending.dataOrigin);
       setPending(null); setSelected(saved); setPage("sessions"); setMessage(`${saved.sampleCount.toLocaleString()} valid rows saved locally. The original file remains on your device.`); setError("");
       await refresh();
     } catch (reason) { setError(getErrorMessage(reason)); }
+  }
+
+  async function loadDemoCsv() {
+    setDemoLoading(true); setError(""); setMessage("");
+    try {
+      const csv = await getSyntheticDemoCsv();
+      beginCsv(new File([csv], "SYNTHETIC_DEMO_ONLY.csv", { type: "text/csv" }), "synthetic");
+      setMessage("Loaded generated demo data for review. These values are synthetic and are not STM32 readings.");
+    } catch (reason) { setError(`Synthetic sample unavailable. Start the local backend first. ${getErrorMessage(reason)}`); }
+    finally { setDemoLoading(false); }
+  }
+
+  async function sendReviewedToBackend(item: SavedSession, origin: "synthetic" | "unknown") {
+    setBackendUploadId(item.id); setError(""); setMessage("");
+    try {
+      const samples = await getImportSamples(item.id);
+      const csvText = makeSafeCsv(item.headers.length ? item.headers : CSV_HEADERS, samples, false);
+      const saved = await uploadReviewedSession({ source_name: item.sourceName, csv_text: csvText, data_origin: origin });
+      const provenance = origin === "synthetic" ? "synthetic test data" : "unknown provenance";
+      setMessage(`${saved.sample_count.toLocaleString()} reviewed rows copied to the local backend (${provenance}). This does not verify STM32 hardware.`);
+      await refreshBackend();
+    } catch (reason) { setError(`Could not send this reviewed copy to the local backend. ${getErrorMessage(reason)}`); }
+    finally { setBackendUploadId(null); }
+  }
+
+  async function removeBackendCopy(item: BackendSession) {
+    if (!window.confirm(`Delete “${item.source_name}” and its ${item.sample_count.toLocaleString()} rows from the local backend? This does not delete the browser copy.`)) return;
+    setBackendDeleteId(item.id); setError(""); setMessage("");
+    try {
+      await deleteBackendSession(item.id);
+      setMessage("Selected copy deleted from the local backend. The browser copy was not changed.");
+      await refreshBackend();
+    } catch (reason) { setError(`Could not delete the local backend copy. ${getErrorMessage(reason)}`); }
+    finally { setBackendDeleteId(null); }
   }
 
   async function openImport(item: SavedSession) { setSelected(item); setPage("sessions"); setError(""); }
@@ -257,7 +312,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
         </button>)}
       </nav>
       <div className="sidebar-fill" />
-      <div className="sidebar-note"><span className="sidebar-note-icon"><Icon name="box" size={16} /></span><div><b>Local by default</b><span>Your files stay in this browser.</span></div></div>
+      <div className="sidebar-note"><span className="sidebar-note-icon"><Icon name="box" size={16} /></span><div><b>Local by default</b><span>{import.meta.env.DEV ? "Backend copies are always optional." : "Your files stay in this browser."}</span></div></div>
       <div className="sidebar-footer"><span>BC A182 · LAB 04</span><span>Build 0.1.0</span></div>
     </aside>
 
@@ -275,10 +330,10 @@ function App({ offlineReady }: { offlineReady: boolean }) {
         {message && <div className="alert alert--success" role="status"><Icon name="check" /><span>{message}</span><button type="button" className="icon-button" onClick={() => setMessage("")} aria-label="Dismiss message"><Icon name="close" size={16} /></button></div>}
 
         {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => csvInput.current?.click()} onOpen={(item) => void openImport(item)} onPage={setPage} />}
-        {page === "sessions" && <SessionsPage imports={imports} selected={selected} samples={selectedSamples} processing={processing} progress={progress} dragging={dragging} onChoose={() => csvInput.current?.click()} onBack={() => setSelected(null)} onDrop={onDrop} onDrag={handleDrag} onOpen={(item) => void openImport(item)} onDelete={(item) => void removeImport(item)} onExport={(item, safe) => void exportImport(item, safe)} onCancelParse={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }} />}
+        {page === "sessions" && <SessionsPage imports={imports} selected={selected} samples={selectedSamples} processing={processing} progress={progress} dragging={dragging} demoLoading={demoLoading} backendAvailable={backendState.available} backendUploadId={backendUploadId} onLoadDemo={() => void loadDemoCsv()} onUpload={(item, origin) => void sendReviewedToBackend(item, origin)} onChoose={() => csvInput.current?.click()} onBack={() => setSelected(null)} onDrop={onDrop} onDrag={handleDrag} onOpen={(item) => void openImport(item)} onDelete={(item) => void removeImport(item)} onExport={(item, safe) => void exportImport(item, safe)} onCancelParse={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }} />}
         {page === "evaluation" && <EvaluationPage reports={evaluations} report={report} inputRef={reportInput} onImport={() => reportInput.current?.click()} onChange={(event) => void importReport(event.target.files?.[0])} onChoose={chooseReport} onDelete={(item) => void removeEvaluation(item)} />}
         {page === "device" && <DevicePage />}
-        {page === "settings" && <SettingsPage imports={imports} evaluations={evaluations} storageInfo={storageInfo} requesting={requestingPersistence} deleting={deleting} onPersist={() => void requestPersistentStorage()} onDeleteAll={() => void deleteAllLocalData()} />}
+        {page === "settings" && <SettingsPage imports={imports} evaluations={evaluations} storageInfo={storageInfo} requesting={requestingPersistence} deleting={deleting} backendState={backendState} backendRefreshing={backendRefreshing} backendDeleteId={backendDeleteId} onDeleteBackend={(item) => void removeBackendCopy(item)} onRefreshBackend={() => void refreshBackend()} onPersist={() => void requestPersistentStorage()} onDeleteAll={() => void deleteAllLocalData()} />}
       </main>
     </div>
 
@@ -295,8 +350,8 @@ function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onOp
     <PageTitle overline="OPERATOR WORKSPACE · 01" title="A clearer view of every handling session." description="Review real capture files, check the data, and keep your evaluation evidence together." action={<button className="button button--primary" type="button" onClick={onImport}><Icon name="upload" size={16} />Import CSV</button>} />
     <div className="overview-grid">
       <section className="panel welcome-panel">
-        <div className="welcome-heading"><div><div className="eyebrow eyebrow--muted">FIELD DESK / LOCAL WORKSPACE</div><h2>Make the data<br /><em>easy to trust.</em></h2></div><div className="welcome-stamp"><span>NO</span><b>02</b><span>REMOTE<br />SERVICES</span></div></div>
-        <p>Bring in a board recording or a pipeline report. Files stay on this device; nothing is sent to a server.</p>
+        <div className="welcome-heading"><div><div className="eyebrow eyebrow--muted">FIELD DESK / LOCAL WORKSPACE</div><h2>Make the data<br /><em>easy to trust.</em></h2></div><div className="welcome-stamp"><span>{import.meta.env.DEV ? "OPT-IN" : "OFFLINE"}</span><b>{import.meta.env.DEV ? "01" : "02"}</b><span>{import.meta.env.DEV ? <>LOCAL<br />API</> : <>NO<br />CLOUD</>}</span></div></div>
+        <p>{import.meta.env.DEV ? "Import a board recording or a pipeline report. Files stay in this browser unless you choose to send reviewed rows to the local API." : "Import a board recording or a pipeline report. Files stay in this browser; the hosted app has no backend connection."}</p>
         <button className="button button--light" type="button" onClick={onImport}><Icon name="upload" size={16} />Choose a recording <Icon name="arrow" size={15} /></button>
         <div className="welcome-foot"><span><span className="tiny-led" />{offlineReady ? "APP SHELL CACHED" : "FIRST VISIT · OPEN WHILE ONLINE"}</span><span>STABLE / NORMAL / ROUGH</span></div>
       </section>
@@ -331,12 +386,13 @@ function ImportDropzone({ dragging, onChoose, onDrop, onDrag, compact = false }:
   </section>;
 }
 
-function SessionsPage({ imports, selected, samples, processing, progress, dragging, onChoose, onBack, onDrop, onDrag, onOpen, onDelete, onExport, onCancelParse }: { imports: SavedSession[]; selected: SavedSession | null; samples: MotionSample[]; processing: boolean; progress: number | null; dragging: boolean; onChoose: () => void; onBack: () => void; onDrop: (event: DragEvent<HTMLElement>) => void; onDrag: (event: DragEvent<HTMLElement>, active: boolean) => void; onOpen: (item: SavedSession) => void; onDelete: (item: SavedSession) => void; onExport: (item: SavedSession, safe: boolean) => void; onCancelParse: () => void }) {
+function SessionsPage({ imports, selected, samples, processing, progress, dragging, demoLoading, backendAvailable, backendUploadId, onLoadDemo, onUpload, onChoose, onBack, onDrop, onDrag, onOpen, onDelete, onExport, onCancelParse }: { imports: SavedSession[]; selected: SavedSession | null; samples: MotionSample[]; processing: boolean; progress: number | null; dragging: boolean; demoLoading: boolean; backendAvailable: boolean; backendUploadId: string | null; onLoadDemo: () => void; onUpload: (item: SavedSession, origin: "synthetic" | "unknown") => void; onChoose: () => void; onBack: () => void; onDrop: (event: DragEvent<HTMLElement>) => void; onDrag: (event: DragEvent<HTMLElement>, active: boolean) => void; onOpen: (item: SavedSession) => void; onDelete: (item: SavedSession) => void; onExport: (item: SavedSession, safe: boolean) => void; onCancelParse: () => void }) {
   return <>
-    <PageTitle overline="DATA WORKSPACE · 02" title="Data sessions" description="Review imported board recordings, validation exclusions, and source values." action={<button className="button button--primary" type="button" onClick={onChoose}><Icon name="upload" size={16} />Import CSV</button>} />
+    <PageTitle overline="DATA WORKSPACE · 02" title="Data sessions" description="Review CSV data, validation notes, and source values." action={<div className="page-title-actions">{import.meta.env.DEV && <button className="button button--outline" type="button" onClick={onLoadDemo} disabled={demoLoading || !backendAvailable}>{demoLoading ? "Loading sample…" : "Load synthetic sample"}</button>}<button className="button button--primary" type="button" onClick={onChoose}><Icon name="upload" size={16} />Import CSV</button></div>} />
+    {import.meta.env.DEV && !backendAvailable && <p className="backend-hint" role="status">Start the local backend to load generated sample data and store reviewed copies. CSV import and browser-local review still work without it.</p>}
     <ImportDropzone dragging={dragging} onChoose={onChoose} onDrop={onDrop} onDrag={onDrag} compact />
     {processing && <div className="inline-progress"><span className="processing-spinner" />Processing in a background worker {progress === null ? "" : `${progress}%`}<button className="text-button" type="button" onClick={onCancelParse}>Cancel</button></div>}
-    {selected ? <SessionDetail item={selected} samples={samples} onExport={onExport} onDelete={onDelete} onBack={onBack} /> : <section className="data-list-section">
+    {selected ? <SessionDetail key={selected.id} item={selected} samples={samples} backendAvailable={backendAvailable} uploading={backendUploadId === selected.id} onUpload={(origin) => onUpload(selected, origin)} onExport={onExport} onDelete={onDelete} onBack={onBack} /> : <section className="data-list-section">
       <div className="section-heading section-heading--tight"><div><div className="eyebrow">LOCAL RECORDS · {imports.length.toString().padStart(2, "0")}</div><h2 tabIndex={-1}>Imported files</h2></div><span className="local-only"><span className="tiny-led" />THIS BROWSER ONLY</span></div>
       {imports.length ? <div className="session-list">{imports.map((item, index) => <button className="session-list-row" key={item.id} type="button" onClick={() => onOpen(item)}>
         <span className="session-row-number">{String(index + 1).padStart(2, "0")}</span><span className="session-row-icon"><Icon name="file" /></span><span className="session-row-name"><b>{item.sourceName}</b><small>Imported {formatDate(item.importedAt)} · {item.sessionIds.length} {item.sessionIds.length === 1 ? "source session" : "source sessions"}</small></span><span className="session-row-count"><b>{item.sampleCount.toLocaleString()}</b><small>VALID ROWS</small></span><span className="session-row-issues">{item.excludedCount ? <StatusPill tone="alert">{item.excludedCount} issues</StatusPill> : <StatusPill tone="good">Clean import</StatusPill>}</span><Icon name="chevron" size={17} />
@@ -346,11 +402,16 @@ function SessionsPage({ imports, selected, samples, processing, progress, draggi
   </>;
 }
 
-function SessionDetail({ item, samples, onExport, onDelete, onBack }: { item: SavedSession; samples: MotionSample[]; onExport: (item: SavedSession, safe: boolean) => void; onDelete: (item: SavedSession) => void; onBack: () => void }) {
+function SessionDetail({ item, samples, backendAvailable, uploading, onUpload, onExport, onDelete, onBack }: { item: SavedSession; samples: MotionSample[]; backendAvailable: boolean; uploading: boolean; onUpload: (origin: "synthetic" | "unknown") => void; onExport: (item: SavedSession, safe: boolean) => void; onDelete: (item: SavedSession) => void; onBack: () => void }) {
+  const isSynthetic = item.dataOrigin === "synthetic";
+  const [dataOrigin, setDataOrigin] = useState<"synthetic" | "unknown">(item.dataOrigin ?? "unknown");
+  useEffect(() => { setDataOrigin(item.dataOrigin ?? "unknown"); }, [item.id, item.dataOrigin]);
   const labels = LABELS.map((label) => ({ label, count: samples.filter((sample) => sample.label === label).length }));
   return <section className="session-detail">
     <button className="text-button detail-back" type="button" onClick={onBack}><Icon name="chevron" size={14} />All imported files</button>
     <div className="detail-toolbar"><div><div className="eyebrow">IMPORT REVIEW · {item.schemaVersion}</div><h2 tabIndex={-1}>{item.sourceName}</h2><span className="detail-meta">Imported {formatDate(item.importedAt)} · {item.sessionIds.length} source session IDs</span></div><div className="detail-actions"><button className="button button--outline" type="button" onClick={() => onExport(item, false)}><Icon name="download" size={15} />Exact values</button><button className="button button--outline" type="button" onClick={() => onExport(item, true)}>Spreadsheet-safe</button><button className="icon-button icon-button--danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.sourceName}`}><Icon name="trash" size={16} /></button></div></div>
+    {(isSynthetic || dataOrigin === "synthetic") && <div className="synthetic-note"><b>Synthetic data provenance.</b> Marked as generated software data; these values are not physical sensor readings or classifier evidence.</div>}
+    {import.meta.env.DEV && <div className="backend-upload-row"><div><span className="eyebrow">OPTIONAL LOCAL API COPY</span><p>Copies the reviewed valid rows to the local SQLite backend. Excluded source rows are not uploaded.</p></div><div className="backend-upload-controls"><label className="visually-hidden" htmlFor="backend-data-origin">Data provenance</label><select id="backend-data-origin" value={dataOrigin} onChange={(event) => setDataOrigin(event.target.value as "synthetic" | "unknown")} disabled={!backendAvailable || uploading || isSynthetic}><option value="unknown">Provenance unknown</option><option value="synthetic">Synthetic test data</option></select><button className="button button--outline" type="button" disabled={!backendAvailable || uploading || samples.length === 0} onClick={() => onUpload(dataOrigin)}>{uploading ? "Sending…" : "Send reviewed copy"}</button></div></div>}
     <div className="detail-stats"><div><span>VALID ROWS</span><b>{item.sampleCount.toLocaleString()}</b></div><div><span>EXCLUDED ROWS</span><b>{item.excludedCount.toLocaleString()}</b></div><div><span>SOURCE RECORDS</span><b>{item.totalRecords.toLocaleString()}</b></div><div><span>SESSION IDS</span><b>{item.sessionIds.length.toString().padStart(2, "0")}</b></div></div>
     <div className="detail-two-col"><section className="subpanel"><div className="subpanel-heading"><div><span className="eyebrow">CLASS DISTRIBUTION</span><h3>Reviewed labels</h3></div><span>VALID ROWS</span></div>{labels.map(({ label, count }, index) => <div className="label-meter" key={label}><span className={`label-marker label-marker--${index}`} /><span>{label}</span><b>{count.toLocaleString()}</b><span className="meter-track"><i style={{ width: `${samples.length ? Math.max(count / samples.length * 100, count ? 2 : 0) : 0}%` }} /></span></div>)}<p className="muted-caption">Distribution describes imported labels; it does not describe classifier predictions.</p></section>
       <section className="subpanel"><div className="subpanel-heading"><div><span className="eyebrow">VALIDATION LOG</span><h3>{item.issues.length ? `${item.issues.length} notes` : "No exclusions"}</h3></div><span>{item.totalRecords} RECORDS</span></div>{item.issues.length ? <div className="issue-list">{item.issues.slice(0, 8).map((entry, index) => <IssueRow key={`${entry.rowNumber}-${index}`} issue={entry} />)}{item.issues.length > 8 && <div className="more-issues">+ {item.issues.length - 8} more notes saved with this import</div>}</div> : <p className="empty-note">Every imported row passed the available schema checks.</p>}</section></div>
@@ -416,16 +477,22 @@ function DevicePage() {
   </>;
 }
 
-function SettingsPage({ imports, evaluations, storageInfo, requesting, deleting, onPersist, onDeleteAll }: { imports: SavedSession[]; evaluations: SavedEvaluation[]; storageInfo: { supported: boolean; persistent?: boolean; usage?: number; quota?: number }; requesting: boolean; deleting: boolean; onPersist: () => void; onDeleteAll: () => void }) {
+function SettingsPage({ imports, evaluations, storageInfo, requesting, deleting, backendState, backendRefreshing, backendDeleteId, onDeleteBackend, onRefreshBackend, onPersist, onDeleteAll }: { imports: SavedSession[]; evaluations: SavedEvaluation[]; storageInfo: { supported: boolean; persistent?: boolean; usage?: number; quota?: number }; requesting: boolean; deleting: boolean; backendState: { available: boolean; health?: BackendHealth; sessions: BackendSession[]; error?: string }; backendRefreshing: boolean; backendDeleteId: string | null; onDeleteBackend: (item: BackendSession) => void; onRefreshBackend: () => void; onPersist: () => void; onDeleteAll: () => void }) {
   const formatBytes = (bytes?: number) => bytes === undefined ? "Not reported" : bytes < 1_000_000 ? `${Math.round(bytes / 1000)} KB` : `${(bytes / 1_000_000).toFixed(1)} MB`;
   return <>
     <PageTitle overline="PREFERENCES · 05" title="Settings & privacy" description="Understand where local records live, how much space the browser reports, and how to remove them." />
+    {import.meta.env.DEV && <section className="settings-panel">
+      <div className="settings-panel-head"><div className="settings-symbol"><Icon name="box" /></div><div><span className="eyebrow">OPTIONAL BACKEND</span><h2>Local API connection</h2><p>The development API stores reviewed CSV copies in a SQLite file on this computer. It does not run on the hosted static PWA.</p></div><StatusPill tone={backendState.available ? "good" : "alert"}>{backendState.available ? "CONNECTED" : "NOT RUNNING"}</StatusPill></div>
+      <div className="storage-stats"><div><span>API VERSION</span><b>{backendState.health?.api_version ?? "—"}</b></div><div><span>STORED COPIES</span><b>{backendState.sessions.length}</b></div><div><span>STORAGE</span><b>{backendState.health?.storage ?? "Unavailable"}</b></div><div><span>DEVICE LINK</span><b>Not connected</b></div></div>
+      <div className="settings-actions"><button className="button button--outline" type="button" onClick={onRefreshBackend} disabled={backendRefreshing}>{backendRefreshing ? "Checking…" : "Check connection"}<Icon name="refresh" size={15} /></button><span>{backendState.error ?? "Uploads are explicit. Only reviewed valid rows are sent; the local API does not imply an STM32 connection."}</span></div>
+      {backendState.sessions.length > 0 && <div className="backend-session-list" aria-label="Sessions stored in the local backend">{backendState.sessions.map((session) => <div key={session.id}><span className="backend-session-copy"><b>{session.source_name}</b><small>{session.sample_count.toLocaleString()} rows · {session.data_origin === "synthetic" ? "Synthetic test data" : "Provenance unknown"}</small></span><button className="icon-button icon-button--danger" type="button" disabled={backendDeleteId === session.id} onClick={() => onDeleteBackend(session)} aria-label={`Delete ${session.source_name} from the local backend`} title="Delete backend copy"><Icon name="trash" size={16} /></button></div>)}</div>}
+    </section>}
     <section className="settings-panel"><div className="settings-panel-head"><div className="settings-symbol"><Icon name="box" /></div><div><span className="eyebrow">BROWSER STORAGE</span><h2>Local records stay here.</h2><p>Imports and evaluation reports are stored in this browser’s IndexedDB. They are not encrypted, backed up, or synchronized.</p></div></div>
       <div className="storage-stats"><div><span>USAGE</span><b>{formatBytes(storageInfo.usage)}</b></div><div><span>AVAILABLE QUOTA</span><b>{formatBytes(storageInfo.quota)}</b></div><div><span>PERSISTENCE</span><b>{storageInfo.persistent === undefined ? "Unknown" : storageInfo.persistent ? "Granted" : "Not granted"}</b></div><div><span>RECORD INVENTORY</span><b>{imports.length} imports · {evaluations.length} reports</b></div></div>
       <div className="settings-actions"><button className="button button--outline" type="button" onClick={onPersist} disabled={requesting}>{requesting ? "Requesting…" : "Ask browser to keep storage"}<Icon name="arrow" size={15} /></button><span>{storageInfo.supported ? "Browser estimates may not reflect all limits; exporting is the safest archive." : "This browser does not expose storage estimates."}</span></div>
     </section>
     <section className="settings-panel settings-panel--privacy"><div><span className="eyebrow">DATA CONTROL</span><h2>Clear local project data</h2><p>Delete every imported recording, validated sample, and evaluation report from this browser. This cannot be undone; export anything you need first.</p></div><button className="button button--danger" type="button" onClick={onDeleteAll} disabled={deleting}><Icon name="trash" size={15} />{deleting ? "Deleting…" : "Delete all local data"}</button></section>
-    <div className="privacy-disclosure"><Icon name="warning" size={17} /><p><b>Keep a separate copy of your original files.</b> Browsers can clear local storage at any time. This app makes no cloud copy and does not collect telemetry.</p></div>
+    <div className="privacy-disclosure"><Icon name="warning" size={17} /><p><b>Keep a separate copy of your original files.</b> Browser storage can be cleared. {import.meta.env.DEV ? "No cloud copy is made; a CSV is sent only if you choose “Send reviewed copy” while the local API is running." : "The hosted static app has no backend connection."} The app does not collect telemetry.</p></div>
   </>;
 }
 

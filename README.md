@@ -25,6 +25,7 @@ The RT-Spark revision, installed sensors and UI, pinout, clock source, programme
 - `ml/`: future board-generated data, processing scripts, and exported models.
 - `tests/`: future host unit and system integration tests.
 - `frontend/`: optional local-first PWA for CSV/session and evaluation review; no device transport is implemented.
+- `backend/`: optional loopback development API for synthetic demo CSV and explicit reviewed-session storage; no STM32 link is implemented.
 - `tools/`: future capture, build, and evidence helpers.
 - `evidence/`: future build, log, and test records.
 - `docs/`: requirements, architecture, progress, blockers, inventory, and roadmap.
@@ -36,6 +37,8 @@ See [firmware build instructions](docs/BUILD.md). Run `pio run` to build the MCU
 The offline CSV processing steps and synthetic-only pipeline tests are described in [the ML pipeline guide](docs/ML_PIPELINE.md). Real capture requires the board and an instructor-reviewed safe labeling protocol.
 
 A separate [ParcelSense Field Desk PWA](frontend/README.md) is available for local CSV/session and evaluation review. Run `cd frontend && npm ci && npm run dev` to open it at `http://localhost:5173`. It is an optional review tool; embedded inference remains independent of it. The [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md) tracks its remaining validation work.
+
+For local backend integration, start `python3 backend/server.py` from the repository root before opening the Field Desk. It provides generated synthetic sample data and stores reviewed CSV copies in a local SQLite database. See [backend instructions](backend/README.md). Synthetic values are software fixtures, not STM32 readings or classifier evidence. The API is not part of the hosted static PWA.
 
 The Field Desk is live at [parcelsense-ai.pages.dev](https://parcelsense-ai.pages.dev). Its intended custom address, `parcelsense.joalvergs.tech`, is associated with Pages and awaits the Name.com CNAME listed in the [PWA deployment guide](docs/PWA_DEPLOYMENT.md).
 

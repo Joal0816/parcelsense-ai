@@ -29,13 +29,14 @@ function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-export async function saveImport(id: string, sourceName: string, review: CsvReview): Promise<SavedSession> {
+export async function saveImport(id: string, sourceName: string, review: CsvReview, dataOrigin: "synthetic" | "unknown" = "unknown"): Promise<SavedSession> {
   const db = await openDatabase();
   const now = new Date().toISOString();
   const sessionIds = [...new Set(review.samples.map((sample) => sample.sessionId))].sort();
   const session: SavedSession = {
     id,
     sourceName,
+    dataOrigin,
     importedAt: now,
     sessionIds,
     sampleCount: review.samples.length,

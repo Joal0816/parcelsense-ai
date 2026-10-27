@@ -7,7 +7,7 @@
 - Static host: Cloudflare Pages (selected by the user)
 - Pages project: `parcelsense-ai` (created as Direct Upload)
 
-For Cloudflare Pages, use `frontend` as the project root, `npm ci && npm run build` as the build command, and `dist` as the output directory. The project builds a static SPA, install manifest, app-shell service worker, and `_headers` policy; it does not require Pages Functions or a backend. Check offline behavior using the production preview before deployment.
+For Cloudflare Pages, use `frontend` as the project root, `npm ci && npm run build` as the build command, and `dist` as the output directory. The project builds a static SPA, install manifest, app-shell service worker, and `_headers` policy. The optional local development API is not deployed as a Pages Function, and production builds do not call it. Check offline behavior using the production preview before deployment.
 
 ## Deployment path
 
@@ -27,7 +27,7 @@ wrangler pages deploy dist --project-name parcelsense-ai
 
 The first command uploads a preview branch; omit `--branch` to deploy to the configured production branch (`master`). The project already exists, so do not run the project-creation command again. Wrangler and Vite must be available in the shell; Wrangler authentication is per developer account.
 
-After the first upload, verify the generated `*.pages.dev` URL, response headers, manifest, and production service-worker installation. Visit once online, allow caching to finish, reload, then test offline reload and recovery after reconnecting. Imported files and records are browser-local; hosting does not upload those records to Cloudflare.
+After the first upload, verify the generated `*.pages.dev` URL, response headers, manifest, and production service-worker installation. Visit once online, allow caching to finish, reload, then test offline reload and recovery after reconnecting. Imported files and records are browser-local; the optional loopback API is available only during local development and hosting does not upload records to Cloudflare.
 
 The custom domain is associated with the Pages project. The confirmed CNAME target is `parcelsense-ai.pages.dev`.
 

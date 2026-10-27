@@ -1,12 +1,12 @@
 # ParcelSense Companion Frontend and PWA Plan
 
-**Status: Initial F1–F3 companion implementation available in `frontend/`; field validation remains open.** The local-first shell, CSV review, browser storage/export, and pipeline report view are implemented as a separate companion product. PWA install/offline behavior and supported-device accessibility still require validation. Board-to-browser transport, live capture, and hardware diagnostics are not implemented; this does not change the six embedded-system phases or claim board connectivity. The embedded classifier remains the primary product and must operate without this PWA.
+**Status: Initial F1–F3 companion implementation available in `frontend/`; an opt-in loopback API prototype is available under `backend/`; field validation remains open.** The local-first shell, CSV review, browser storage/export, pipeline report view, and explicit reviewed-copy API flow are implemented as a separate companion product. The development API can generate synthetic demo data and store reviewed copies in local SQLite. PWA install/offline behavior and supported-device accessibility still require validation. Board-to-browser transport, live capture, and hardware diagnostics are not implemented; this does not change the six embedded-system phases or claim board connectivity. The embedded classifier remains the primary product and must operate without this PWA.
 
 ## Purpose and product boundary
 
 The proposed ParcelSense Companion is an installable, offline-capable web application for reviewing device status, organizing capture sessions, importing and inspecting CSV data, and viewing evaluation reports. It may later provide a live operator interface if the board exposes a verified communication interface. It must never be required for sampling, inference, or local feedback on the STM32.
 
-The first usable version should work without a board connection: users can import a CSV using the documented [dataset schema](../ml/data/SCHEMA.md), inspect data and exclusions, and export their reviewed files. Live capture/control is a later, optional capability behind a hardware verification gate. The proposed [capture protocol](../ml/data/CAPTURE_PROTOCOL.md) still requires board and instructor review.
+The first usable version should work without a board connection: users can import a CSV using the documented [dataset schema](../ml/data/SCHEMA.md), inspect data and exclusions, and export their reviewed files. Local backend copies are optional and remain on the development computer; synthetic demo data is visibly marked and must not be treated as board evidence. Live capture/control is a later, optional capability behind a hardware verification gate. The proposed [capture protocol](../ml/data/CAPTURE_PROTOCOL.md) still requires board and instructor review.
 
 ## Goals
 
@@ -16,6 +16,7 @@ The first usable version should work without a board connection: users can impor
 - Review session/trial metadata, class balance, sensor status, and data quality before export or analysis.
 - Display evaluation results from the host pipeline with class order, split provenance, data counts, and clear synthetic-versus-real provenance.
 - Keep experiment data local by default and provide explicit export and deletion controls.
+- Allow an explicit upload of validated rows to a loopback-only development API; keep backend integration independent from device status and inference.
 - Preserve accessible operation on small screens, with keyboard and assistive-technology support.
 
 ## Out of scope for the first release
@@ -24,6 +25,7 @@ The first usable version should work without a board connection: users can impor
 - Creating class labels from model predictions or claiming operational thresholds.
 - Training a model in the browser; training and model export stay in the documented host pipeline initially.
 - Cloud accounts, cloud synchronization, analytics, remote firmware updates, or public data sharing.
+- A deployed API service or a backend dependency for the hosted static app.
 - Assuming Bluetooth, USB serial, Wi-Fi, UART, pins, or any particular board transport. The board's installed communication hardware and protocol are unverified.
 - Treating a PWA browser runtime as equivalent to on-device offline operation.
 
@@ -50,6 +52,8 @@ Navigation should remain shallow: Overview, Capture, Data, Evaluation, Diagnosti
 4. Review schema errors, invalid rows, trial grouping, labels, and provenance.
 5. Export a reviewed copy or delete local records.
 
+An optional local-development workflow can generate the clearly marked synthetic CSV through the loopback API and explicitly store reviewed valid rows in its SQLite database. See [backend instructions](../backend/README.md). This is software integration evidence only; it does not verify sensor data or board connectivity.
+
 No connection prompt should appear as a blocker to these file-based workflows.
 
 ### 2. Board-backed capture, after hardware verification
@@ -75,7 +79,7 @@ If the connection drops, stop or mark the trial according to the verified protoc
 
 Use a small TypeScript PWA with a component-based UI, static build output, and service-worker-managed app-shell caching. The user selected Vite + React + TypeScript. Review current package maintenance, licensing, and security before adding dependencies.
 
-Proposed repository boundary: a new top-level `frontend/` directory containing the app, tests, and its own build documentation. It should not be added to the firmware PlatformIO source or linked into the target image. The user selected both localhost and hosted HTTPS use, with Cloudflare Pages as the hosted target. The recommended hostname is `parcelsense.joalvergs.tech`; DNS setup is documented in [PWA deployment](PWA_DEPLOYMENT.md). The app itself should not require a backend.
+Proposed repository boundary: a top-level `frontend/` directory containing the app, tests, and its own build documentation, separate from the optional `backend/` local development API. Neither component is added to the firmware PlatformIO source or target image. The user selected localhost and hosted HTTPS use, with Cloudflare Pages as the hosted target. The recommended hostname is `parcelsense.joalvergs.tech`; DNS setup is documented in [PWA deployment](PWA_DEPLOYMENT.md). The app's file workflows and hosted build do not require a backend.
 
 ### Layers
 
@@ -139,7 +143,7 @@ For spreadsheet use, offer two clearly named exports when needed: **exact data e
 
 ## Security and privacy requirements
 
-- No authentication or server-side data store in the initial version.
+- No authentication or publicly hosted data store. The optional loopback development API stores only CSV copies a user explicitly submits.
 - No telemetry, third-party trackers, remote fonts, or external API calls in the offline workflow.
 - Treat CSV and JSON files as untrusted input: validate schema, types, lengths, nesting depth, and numeric ranges; render imported strings as text, never as executable HTML.
 - Avoid logging sample contents or sensitive local metadata to the console.
@@ -152,9 +156,10 @@ For spreadsheet use, offer two clearly named exports when needed: **exact data e
 | Milestone | Scope | Exit criteria |
 |---|---|---|
 | **F0 — Product and protocol design** | Confirm audience, screen flows, canonical data types, privacy choices, and supported browser/device targets. | Reviewed UI sketches, CSV/report contracts, and no unresolved assumptions presented as facts. |
-| **F1 — Offline shell** | Create frontend app shell, navigation, status/empty states, install metadata, and app-shell service worker. | Builds locally; launches offline after first load; no backend or external runtime dependency; accessible keyboard navigation. |
+| **F1 — Offline shell** | Create frontend app shell, navigation, status/empty states, install metadata, and app-shell service worker. | Builds locally; launches offline after first load; core workflows have no backend or external runtime dependency; accessible keyboard navigation. |
 | **F2 — File workspace** | CSV import, validation, session/trial review, exclusions, local persistence, export/delete. | Tests cover valid, malformed, oversized, invalid-sample, unknown-label, and conflicting-trial input; original data remains unchanged. |
 | **F3 — Evaluation reports** | Read pipeline JSON and present results/provenance clearly. | Fixtures verify label order, metric values, missing metrics, synthetic warning, and unknown provenance behavior. No performance claim from synthetic fixtures. |
+| **Local API prototype** | Optional loopback API, deterministic synthetic CSV endpoint, CSV validation, SQLite reviewed-copy storage. | API remains local-only; uploads are explicit; provenance is recorded; synthetic values are identified as fixtures; no hardware link is claimed. |
 | **F4 — Verified device transport (optional)** | Implement a transport adapter only after board/firmware protocol and browser compatibility are known. | Board revision and transport are documented; connect/disconnect/fault behavior is tested; live data matches firmware logs and schema. |
 | **F5 — Field validation and release** | User testing, offline/update checks, privacy/accessibility review, and reproducible static release. | Offline use, storage quota/eviction recovery, data deletion/export, supported browser/device matrix, accessibility checks, and release artifacts documented. |
 

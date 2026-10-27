@@ -20,7 +20,9 @@ The GCC `ARM_CM4F` port owns SVC, PendSV, and SysTick. SysTick is the 1 kHz Free
 
 ## Data and evaluation flow
 
-Board capture produces trial/session-identified labeled records. Preprocessing splits data by trial/session to reduce leakage, compares a simple threshold baseline with compact candidates, and exports fixed preprocessing parameters with the chosen model. Host parity checks support model integration; final performance claims require held-out real board trials. Synthetic samples, if later used, are limited to clearly labeled pipeline smoke tests.
+Board capture produces trial/session-identified labeled records. Preprocessing splits data by trial/session to reduce leakage, compares a simple threshold baseline with compact candidates, and exports fixed preprocessing parameters with the chosen model. Host parity checks support model integration; final performance claims require held-out real board trials. Generated synthetic data is limited to clearly labeled software test/demo workflows and must never support real performance claims.
+
+The optional Field Desk development API can generate a clearly synthetic CSV fixture and store user-selected reviewed copies locally for software integration work. It is not a board transport or part of the embedded prediction path; real sensor data, hardware connectivity, and classifier performance remain unverified.
 
 ## Phase 3 interface boundary
 
