@@ -30,6 +30,23 @@ MAX_CSV_BYTES = 25 * 1024 * 1024
 ALLOWED_ORIGINS = {
     "http://localhost:5173", "http://127.0.0.1:5173",
 }
+CONFIGURED_DEV_ORIGIN = os.environ.get("PARCELSENSE_DEV_ORIGIN")
+if CONFIGURED_DEV_ORIGIN:
+    parsed_dev_origin = urlsplit(CONFIGURED_DEV_ORIGIN)
+    try:
+        configured_port = parsed_dev_origin.port
+    except ValueError as error:
+        raise RuntimeError("PARCELSENSE_DEV_ORIGIN must be a valid loopback HTTP origin.") from error
+    if (parsed_dev_origin.scheme != "http"
+            or parsed_dev_origin.hostname not in {"localhost", "127.0.0.1"}
+            or configured_port is None
+            or parsed_dev_origin.username is not None
+            or parsed_dev_origin.password is not None
+            or parsed_dev_origin.path not in {"", "/"}
+            or parsed_dev_origin.query
+            or parsed_dev_origin.fragment):
+        raise RuntimeError("PARCELSENSE_DEV_ORIGIN must be an exact loopback HTTP origin with a port.")
+    ALLOWED_ORIGINS.add(f"http://{parsed_dev_origin.netloc}")
 ALLOWED_ORIGINS_OF_DATA = {"synthetic", "unknown"}
 
 

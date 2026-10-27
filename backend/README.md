@@ -50,6 +50,11 @@ The API accepts browser requests only from the local Vite development origin,
 and binds to loopback. It has no account or authentication
 layer and must not be exposed on a public interface.
 
+For a non-default Vite port, `PARCELSENSE_DEV_ORIGIN` can add one exact
+loopback HTTP origin (for example, `http://127.0.0.1:5180`) to the allowlist.
+The server rejects remote hosts, paths, credentials, and origins without a
+port in this setting.
+
 ## Data location
 
 The default database is `.local/parcelsense.sqlite3`, ignored by Git. To use a
@@ -72,4 +77,9 @@ cd frontend
 npm test
 npm run typecheck
 npm run build
+npm run e2e:local-api
 ```
+
+The end-to-end command requires Chromium and ChromeDriver. It starts isolated
+local services and stores its fixture database under the system temporary
+directory, then removes it after the run.

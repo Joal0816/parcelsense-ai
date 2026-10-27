@@ -40,3 +40,11 @@ Set the Pages project root to `frontend`, the build command to `npm ci && npm ru
 The current import cap is 25 MiB with a 2 MiB synchronous fallback if Web Workers are unavailable. The cap is intentionally conservative and has not been benchmarked on target phones. Route/session focus, keyboard skip navigation, live connection/import status, larger touch controls, and reduced-motion handling are implemented. Quota recovery copy has a unit test; actual quota pressure, browser eviction, mobile assistive technology, and supported-device field validation remain pending.
 
 Run the frontend tests with `npm test`; run type checking and the production build with `npm run build`.
+
+For the browser-to-backend workflow, install Chromium and the matching
+ChromeDriver, then run `npm run e2e:local-api` from `frontend/`. The check
+starts a temporary backend database, Vite server, and headless browser; it
+loads and reviews the synthetic sample, sends it to the API, deletes that API
+copy, and confirms the browser copy remains. It uses temporary data and cleans
+up its services and database when finished. Set `CHROME_BIN` or
+`CHROMEDRIVER_BIN` if the executables are outside their standard paths.

@@ -188,7 +188,7 @@ For spreadsheet use, offer two clearly named exports when needed: **exact data e
 
 ## Immediate next steps
 
-The current software pass adds a skip link, visible programmatic route/session focus, live connection and import-progress semantics, 44 px primary controls, and a reduced-motion override. Unit tests cover quota-error recovery copy. Run the keyboard, accessibility-tree, contrast, reflow, import/export, and offline checks documented in `docs/PROGRESS.md`; these checks do not complete mobile screen-reader or real quota-pressure validation.
+The current software pass adds a skip link, visible programmatic route/session focus, live connection and import-progress semantics, 44 px primary controls, and a reduced-motion override. Unit tests cover quota-error recovery copy, and `cd frontend && npm run e2e:local-api` verifies the synthetic browser-to-local-API flow in Chromium. Previously recorded keyboard, accessibility-tree, contrast, reflow, and offline checks are in `docs/PROGRESS.md`; they do not complete mobile screen-reader or real quota-pressure validation.
 
 1. Validate import → review → persist → reload → export/delete with representative board CSVs when available; no board CSV is currently available.
 2. Complete screen-reader, supported-browser/device, browser-cleared storage, and real quota-pressure validation before declaring F5 field acceptance.
