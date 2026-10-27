@@ -7,20 +7,27 @@ service and it does not connect to or emulate an STM32 transport.
 
 ## Run it
 
-Start the backend from the repository root:
+The simplest option is to start both the API and PWA from `frontend/`:
+
+```sh
+cd frontend
+npm run dev:local
+```
+
+Alternatively, run the services separately. Start the backend from the repository root:
 
 ```sh
 python3 backend/server.py
 ```
 
-In a second terminal, start the PWA:
+Then start Vite in another terminal:
 
 ```sh
 cd frontend
 npm run dev
 ```
 
-Open <http://localhost:5173>. Vite proxies `/api` to the loopback backend.
+Open <http://127.0.0.1:5173>. Vite proxies `/api` to the loopback backend.
 Settings shows whether the API is running. Browser CSV import and review keep
 working if the backend is stopped.
 
@@ -78,8 +85,10 @@ npm test
 npm run typecheck
 npm run build
 npm run e2e:local-api
+npm run e2e:readiness
 ```
 
-The end-to-end command requires Chromium and ChromeDriver. It starts isolated
-local services and stores its fixture database under the system temporary
-directory, then removes it after the run.
+The local API end-to-end command requires Chromium and ChromeDriver. The
+readiness command requires Chromium, Firefox, and ChromeDriver; it builds the
+production app and checks offline behavior in both browser engines. Test
+services, profiles, and data are isolated and removed after each run.

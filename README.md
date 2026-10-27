@@ -36,11 +36,11 @@ See [firmware build instructions](docs/BUILD.md). Run `pio run` to build the MCU
 
 The offline CSV processing steps and synthetic-only pipeline tests are described in [the ML pipeline guide](docs/ML_PIPELINE.md). Real capture requires the board and an instructor-reviewed safe labeling protocol.
 
-A separate [ParcelSense Field Desk PWA](frontend/README.md) is available for local CSV/session and evaluation review. Run `cd frontend && npm ci && npm run dev` to open it at `http://localhost:5173`. It is an optional review tool; embedded inference remains independent of it. The [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md) tracks its remaining validation work.
+A separate [ParcelSense Field Desk PWA](frontend/README.md) is available for local CSV/session and evaluation review. Run `cd frontend && npm ci && npm run dev:local` to start both the loopback PWA and optional local API. It is an optional review tool; embedded inference remains independent of it. The [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md) tracks its remaining validation work.
 
-For local backend integration, start `python3 backend/server.py` from the repository root before opening the Field Desk. It provides generated synthetic sample data and stores reviewed CSV copies in a local SQLite database. See [backend instructions](backend/README.md). Synthetic values are software fixtures, not STM32 readings or classifier evidence. The API is not part of the hosted static PWA.
+The local API provides generated synthetic sample data and stores explicitly reviewed CSV copies in a local SQLite database. See [backend instructions](backend/README.md). Synthetic values are software fixtures, not STM32 readings or classifier evidence. The API is not part of the hosted static PWA.
 
-The Field Desk is live at [parcelsense-ai.pages.dev](https://parcelsense-ai.pages.dev). Its intended custom address, `parcelsense.joalvergs.tech`, is associated with Pages and awaits the Name.com CNAME listed in the [PWA deployment guide](docs/PWA_DEPLOYMENT.md).
+The Field Desk is live at [parcelsense-ai.pages.dev](https://parcelsense-ai.pages.dev) and [parcelsense.joalvergs.tech](https://parcelsense.joalvergs.tech). Deployment and DNS details are in the [PWA deployment guide](docs/PWA_DEPLOYMENT.md).
 
 ## Development phases
 

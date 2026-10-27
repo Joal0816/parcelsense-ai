@@ -188,8 +188,8 @@ For spreadsheet use, offer two clearly named exports when needed: **exact data e
 
 ## Immediate next steps
 
-The current software pass adds a skip link, visible programmatic route/session focus, live connection and import-progress semantics, 44 px primary controls, and a reduced-motion override. Unit tests cover quota-error recovery copy, and `cd frontend && npm run e2e:local-api` verifies the synthetic browser-to-local-API flow in Chromium. Previously recorded keyboard, accessibility-tree, contrast, reflow, and offline checks are in `docs/PROGRESS.md`; they do not complete mobile screen-reader or real quota-pressure validation.
+The current software pass adds a skip link, visible programmatic route/session focus, live connection and import-progress semantics, 44 px primary controls, and a reduced-motion override. Unit tests cover quota-error recovery copy. `cd frontend && npm run e2e:local-api` verifies the synthetic browser-to-local-API flow, and `npm run e2e:readiness` checks keyboard behavior in Chromium plus semantic, responsive, and offline behavior in Chromium and Firefox. These checks do not complete mobile screen-reader, Safari/iOS, representative real-capture, browser-eviction, or real quota-pressure validation.
 
-1. Validate import → review → persist → reload → export/delete with representative board CSVs when available; no board CSV is currently available.
-2. Complete screen-reader, supported-browser/device, browser-cleared storage, and real quota-pressure validation before declaring F5 field acceptance.
-3. Keep all live device transport disabled until board revision, firmware protocol, and browser compatibility are verified. The board-arrival and firmware evidence gates remain in `docs/BOARD_ARRIVAL_CHECKLIST.md` and Phases 3–6 of the embedded roadmap.
+1. On mobile devices, validate screen-reader navigation, zoom/reflow, import/export, browser storage clearing, and quota-pressure recovery; record the browser/device versions.
+2. Validate import → review → persist → reload → export/delete with representative real captures when available; no board CSV is currently available.
+3. Keep live device transport disabled until board revision, firmware protocol, and browser compatibility are verified. The board-arrival and firmware evidence gates remain in `docs/BOARD_ARRIVAL_CHECKLIST.md` and Phases 3–6 of the embedded roadmap.

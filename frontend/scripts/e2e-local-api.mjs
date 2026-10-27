@@ -193,6 +193,15 @@ try {
 
   await clickNav("Data sessions");
   await waitFor("browser-local import to remain", async () => (await bodyText()).includes("SYNTHETIC_DEMO_ONLY.csv"));
+  announce("backend copy deletion preserved the browser-local import");
+
+  await stop(backend);
+  await clickNav("Settings");
+  await clickButton("Check connection");
+  await waitFor("stopped backend status", async () => (await bodyText()).includes("NOT RUNNING"));
+  await clickNav("Data sessions");
+  await waitFor("browser workflow with the backend stopped", async () => (await bodyText()).includes("SYNTHETIC_DEMO_ONLY.csv"));
+  announce("browser-local review remains available when the local API is stopped");
   announce("end-to-end local API flow passed");
 } catch (error) {
   const details = [...logs].map(([name, lines]) => `\n${name}:\n${lines.join("\n")}`).join("");
