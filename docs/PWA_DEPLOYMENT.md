@@ -31,6 +31,19 @@ After the first upload, verify the generated `*.pages.dev` URL, response headers
 
 The custom domain is associated with the Pages project. The confirmed CNAME target is `parcelsense-ai.pages.dev`.
 
+## GitHub Actions release automation
+
+`.github/workflows/ci.yml` runs on pull requests to `master`, pushes to `master`, and manual dispatches. The workflow checks the PWA, runs its browser integration and Chromium/Firefox readiness suites, tests the local API and ML pipeline, runs firmware host tests, and compiles the STM32 firmware without requiring a board. The production deployment waits for every check and deploys the exact PWA bundle produced by the passing web job.
+
+To connect this workflow to GitHub:
+
+1. Create or select a private GitHub repository for this project and use `master` as its default branch. This checkout currently has no Git remote configured.
+2. Add a GitHub Actions environment named `production` with secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Create a Cloudflare account API token with **Cloudflare Pages: Edit** permission, scoped to the account containing `parcelsense-ai`.
+3. Add the GitHub remote, push `master`, and confirm the workflow passes. The push will deploy the Pages project `parcelsense-ai` on its production branch and retain `parcelsense.joalvergs.tech` as the public hostname.
+4. Protect `master` with required checks for **Web checks and browser readiness**, **Backend and ML tests**, **Firmware host tests**, and **STM32 firmware compile**. The deploy job runs only after those checks succeed on `master`.
+
+The current development environment has no valid GitHub CLI or Wrangler credentials, so repository creation, secret configuration, and the first Actions deployment still require account access. Do not put either Cloudflare value in the repository or commit it to source control.
+
 ## Name.com DNS record
 
 The Pages project has `parcelsense.joalvergs.tech` associated as a custom domain. Cloudflare requires associating the subdomain with the project before adding a CNAME at an external DNS provider. The verified Name.com record is:

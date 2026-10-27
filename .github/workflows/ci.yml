@@ -1,0 +1,148 @@
+name: ParcelSense CI and CD
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: parcelsense-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  web:
+    name: Web checks and browser readiness
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Run web unit tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Run local API browser integration
+        working-directory: frontend
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          CHROMEDRIVER_BIN: /usr/local/share/chromedriver-linux64/chromedriver
+        run: npm run e2e:local-api
+
+      - name: Run production browser readiness
+        working-directory: frontend
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          CHROMEDRIVER_BIN: /usr/local/share/chromedriver-linux64/chromedriver
+          FIREFOX_BIN: /usr/bin/firefox
+        run: npm run e2e:readiness
+
+      - name: Upload verified production bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  python:
+    name: Backend and ML tests
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Test local API
+        run: python -m unittest discover -s backend/tests -v
+
+      - name: Test data and model pipeline
+        run: python -m unittest discover -s tests/ml -v
+
+  firmware-host:
+    name: Firmware host tests
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Run host-side firmware tests
+        run: sh tools/test_host.sh
+
+  firmware-build:
+    name: STM32 firmware compile
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install PlatformIO
+        run: python -m pip install platformio
+
+      - name: Compile firmware
+        run: pio run
+
+  deploy:
+    name: Deploy production PWA
+    needs: [web, python, firmware-host, firmware-build]
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Check out source metadata
+        uses: actions/checkout@v7
+
+      - name: Download the verified production bundle
+        uses: actions/download-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Check Cloudflare deployment configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to the production environment secrets."
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy frontend/dist --project-name=parcelsense-ai
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
