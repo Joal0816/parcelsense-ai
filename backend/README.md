@@ -48,8 +48,9 @@ contain `SYNTHETIC_DEMO_ONLY`.
 
 The session detail screen sends only valid rows already accepted by the PWA.
 Excluded original rows stay on the user's device. The upload is explicit, and
-its provenance must be marked `synthetic` or `unknown`; synthetic data is marked
-automatically when the generated demo file is used. The API supports local
+its provenance must be marked `synthetic`, `real_board`, or `unknown`. A
+`real_board` value is an operator declaration and is not independently verified;
+synthetic data is marked automatically when the generated demo file is used. The API supports local
 development only. Cloudflare Pages hosts a static app and does not run this
 SQLite service.
 

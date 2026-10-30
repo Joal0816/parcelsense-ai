@@ -59,26 +59,33 @@ The detail view shows valid and excluded row counts, the imported label distribu
 
 Exports do not change the stored import. The app's session export contains accepted rows; keep the original CSV if you need excluded source rows or the complete original file. Use the delete icon on a session to remove its browser copy. Deletion cannot be undone.
 
-## Try the synthetic sample (local development only)
+## Use the two data modes
 
-The hosted app does not include the optional backend, so its **Load synthetic sample** button is not available there. To exercise the generated sample and local API integration on your computer:
+Both modes are available from **Data sessions** in the same web app. Choose a mode with the radio controls near the top of the page.
 
-1. Install Node.js 22.12 or newer, npm, and Python 3.
-2. From the project root, run:
+### Synthetic demo
 
-   ```sh
-   cd frontend
-   npm ci
-   npm run dev:local
-   ```
+Select **Synthetic demo**, then **Load synthetic sample**. The app includes a deterministic 1,200-row CSV fixture, so this works on the hosted app and after the PWA has been cached for offline use. Review and save it through the normal CSV flow. The saved import is marked synthetic.
 
-3. Open the local URL printed by the command (normally <http://127.0.0.1:5173>).
-4. Open **Data sessions** and select **Load synthetic sample**. The local API generates a deterministic 1,200-row CSV and the app presents it through the normal CSV review flow.
-5. Save it and inspect the session. Its provenance is marked synthetic.
+These generated values are only for exercising import and review. They are not sensor readings, a parcel-handling result, or evidence of classifier accuracy. Do not use them to claim model performance.
 
-Stop the local services with **Ctrl+C** in the terminal. The optional API stores copies in `.local/parcelsense.sqlite3` on this computer and is bound to loopback. In a session detail, **Send reviewed copy** explicitly copies accepted rows to that local database. **Settings & privacy** shows the API status and lets you delete backend copies.
+### STM32 capture
 
-The sample uses generated motion values. It is useful for trying import, review, and local API storage; it is not a physical recording, a valid result for parcel handling, or evidence of classifier accuracy. The hosted app has no API connection, and local API data is not uploaded to the hosted app.
+Select **STM32 capture**, then **Import STM32 CSV** or drop a compatible CSV into the import area. The app checks the ParcelSense schema and reviews the file, but this mode is a file import only: live device connection, recording, and serial transfer are not implemented. Use a CSV exported by a capture process you have separately verified.
+
+Before saving, confirm the declaration that the file was recorded using an STM32 board. The app then marks it **STM32 declared · unverified**. This records the operator's declaration; the app cannot identify the device or verify the sensors, units, labeling, or capture process. CSVs imported from Overview remain marked with unknown provenance; use STM32 mode to declare a board capture.
+
+### Optional local API
+
+The browser app remains usable without the API. For local SQLite copies, install Node.js 22.12 or newer, npm, and Python 3. From the project root, run:
+
+```sh
+cd frontend
+npm ci
+npm run dev:local
+```
+
+Open the local URL printed by the command (normally <http://127.0.0.1:5173>). In a session detail, **Send reviewed copy** copies accepted rows to `.local/parcelsense.sqlite3` on this computer; it does not transmit data to the hosted app. The API is bound to loopback. Stop both local services with **Ctrl+C**.
 
 ## Review a pipeline evaluation report
 
@@ -106,7 +113,7 @@ When the board is available, verify its revision and sensors, establish the safe
 | --- | --- |
 | A CSV is rejected before review | Confirm it is a UTF-8 CSV with unique headers and every required column. Check that `schema_version` is `1.0`. |
 | Many rows are excluded | Read the validation notes and correct IDs, timestamps, numeric motion values, validity/status fields, labels, or trial label conflicts in a copy of the source. Then import the corrected file. |
-| **Load synthetic sample** is missing or unavailable | It is only in local development. Start the app with `npm run dev:local` from `frontend/`; the API must be running. |
+| **Load synthetic sample** is missing or unavailable | It is bundled with the app. Reconnect and reload if its offline copy has not been cached yet. |
 | **Send reviewed copy** is disabled | This is available only in local development while the API is running, and only when the import has valid rows. |
 | Imported files are missing | Check the same browser profile and device used for import. Browser storage is local and may be cleared or evicted. Restore by importing the original CSV again. |
 | The app will not open offline | Reconnect and open the hosted app once, wait for it to finish loading, then try offline again. |

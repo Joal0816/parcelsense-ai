@@ -34,7 +34,7 @@ export interface CsvReview {
 export interface SavedSession {
   id: string;
   sourceName: string;
-  dataOrigin?: "synthetic" | "unknown";
+  dataOrigin?: "synthetic" | "real_board" | "unknown";
   importedAt: string;
   sessionIds: string[];
   sampleCount: number;

@@ -26,7 +26,7 @@ The project selection and tradeoffs are summarized in [project rationale](docs/P
 - `firmware/`: future embedded application and board notes.
 - `ml/`: future board-generated data, processing scripts, and exported models.
 - `tests/`: future host unit and system integration tests.
-- `frontend/`: optional local-first PWA for CSV/session and evaluation review; no device transport is implemented.
+- `frontend/`: local-first PWA with synthetic-demo and STM32-capture CSV review modes; no device transport is implemented.
 - `backend/`: optional loopback development API for synthetic demo CSV and explicit reviewed-session storage; no STM32 link is implemented.
 - `tools/`: future capture, build, and evidence helpers.
 - `evidence/`: future build, log, and test records.
@@ -40,9 +40,9 @@ The offline CSV processing steps and synthetic-only pipeline tests are described
 
 The C feature extractor and sample-window inference boundary are host-testable and checked against the Python feature contract. They are not connected to firmware tasks until physical sensors and a real-data model are verified. Run `sh tools/test_host.sh`, `python3 -m unittest discover -s tests/ml -v`, `python3 -m unittest discover -s backend/tests -v`, and `python3 tools/check_docs.py` for software checks. Frontend checks are `cd frontend && npm ci && npm run typecheck && npm test && npm run build`. The [software test plan](docs/TEST_PLAN.md) lists browser, release, and hardware-gated checks.
 
-A separate [ParcelSense Field Desk PWA](frontend/README.md) is available for local CSV/session and evaluation review. See the [Field Desk user guide](docs/ParcelSense%20User%20Guide.md) for step-by-step instructions. Run `cd frontend && npm ci && npm run dev:local` to start both the loopback PWA and optional local API. It is an optional review tool; embedded inference remains independent of it. The [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md) tracks its remaining validation work.
+A separate [ParcelSense Field Desk PWA](frontend/README.md) is available for local CSV/session and evaluation review. It includes a synthetic sample for trying the workflow now and an STM32 capture mode for importing a compatible file when board data becomes available. See the [Field Desk user guide](docs/ParcelSense%20User%20Guide.md) for step-by-step instructions. Run `cd frontend && npm ci && npm run dev:local` to start both the loopback PWA and optional local API. It is an optional review tool; embedded inference remains independent of it. The [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md) tracks its remaining validation work.
 
-The local API provides generated synthetic sample data and stores explicitly reviewed CSV copies in a local SQLite database. See [backend instructions](backend/README.md). Synthetic values are software fixtures, not STM32 readings or classifier evidence. The API is not part of the hosted static PWA.
+The local API stores explicitly reviewed CSV copies in a local SQLite database. See [backend instructions](backend/README.md). The PWA's bundled synthetic values are software fixtures, not STM32 readings or classifier evidence. The local API is not part of the hosted static PWA.
 
 The Field Desk is live at [parcelsense-ai.pages.dev](https://parcelsense-ai.pages.dev) and [parcelsense.joalvergs.tech](https://parcelsense.joalvergs.tech). Deployment and DNS details are in the [PWA deployment guide](docs/PWA_DEPLOYMENT.md).
 

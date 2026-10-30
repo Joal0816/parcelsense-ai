@@ -47,7 +47,7 @@ if CONFIGURED_DEV_ORIGIN:
             or parsed_dev_origin.fragment):
         raise RuntimeError("PARCELSENSE_DEV_ORIGIN must be an exact loopback HTTP origin with a port.")
     ALLOWED_ORIGINS.add(f"http://{parsed_dev_origin.netloc}")
-ALLOWED_ORIGINS_OF_DATA = {"synthetic", "unknown"}
+ALLOWED_ORIGINS_OF_DATA = {"synthetic", "real_board", "unknown"}
 
 
 def connect_db() -> sqlite3.Connection:
@@ -217,7 +217,7 @@ class ApiHandler(BaseHTTPRequestHandler):
             if len(csv_text.encode("utf-8")) > MAX_CSV_BYTES:
                 raise ValueError("CSV files are limited to 25 MiB.")
             if not isinstance(data_origin, str) or data_origin not in ALLOWED_ORIGINS_OF_DATA:
-                raise ValueError("data_origin must be synthetic or unknown.")
+                raise ValueError("data_origin must be synthetic, real_board, or unknown.")
             session_ids, sample_count, source_row_count, issue_count = validate_csv(csv_text)
             if sample_count != source_row_count:
                 raise ValueError("CSV contains invalid motion rows; only reviewed valid rows can be stored.")

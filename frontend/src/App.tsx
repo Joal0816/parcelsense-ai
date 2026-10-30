@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { LABELS, type CsvReview, type ImportIssue, type MotionSample, type SavedEvaluation, type SavedSession } from "./domain.ts";
 import { parseMotionCsv } from "./lib/csv.ts";
-import { deleteBackendSession, getBackendHealth, getBackendSessions, getSyntheticDemoCsv, uploadReviewedSession, type BackendHealth, type BackendSession } from "./lib/backend.ts";
+import { deleteBackendSession, getBackendHealth, getBackendSessions, uploadReviewedSession, type BackendHealth, type BackendSession } from "./lib/backend.ts";
 import { deleteEvaluation, deleteImport, downloadText, getErrorMessage, getImportSamples, listEvaluations, listImports, makeSafeCsv, saveEvaluation, saveImport, validateEvaluation } from "./lib/storage.ts";
 
 type Page = "overview" | "sessions" | "evaluation" | "device" | "settings";
+type DataOrigin = "synthetic" | "real_board" | "unknown";
+type CaptureMode = "synthetic" | "stm32";
 type IconName = "overview" | "data" | "evaluation" | "device" | "settings" | "upload" | "arrow" | "clock" | "check" | "box" | "download" | "trash" | "file" | "close" | "warning" | "refresh" | "external" | "chevron";
 
 const PAGES: Array<{ id: Page; name: string; detail: string; icon: IconName }> = [
@@ -49,6 +51,12 @@ function formatDate(value: string, compact = false): string {
   return new Intl.DateTimeFormat(undefined, compact ? { month: "short", day: "numeric" } : { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
+function originLabel(origin: DataOrigin | undefined): string {
+  if (origin === "synthetic") return "synthetic";
+  if (origin === "real_board") return "STM32 declared · unverified";
+  return "source unknown";
+}
+
 function PageTitle({ overline, title, description, action }: { overline: string; title: string; description: string; action?: ReactNode }) {
   return <div className="page-title"><div><div className="eyebrow">{overline}</div><h1 tabIndex={-1}>{title}</h1><p>{description}</p></div>{action}</div>;
 }
@@ -63,10 +71,11 @@ function EmptyMark({ icon = "box" }: { icon?: IconName }) {
 
 function App({ offlineReady }: { offlineReady: boolean }) {
   const [page, setPage] = useState<Page>("overview");
+  const [captureMode, setCaptureMode] = useState<CaptureMode>("synthetic");
   const [online, setOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
   const [imports, setImports] = useState<SavedSession[]>([]);
   const [evaluations, setEvaluations] = useState<SavedEvaluation[]>([]);
-  const [pending, setPending] = useState<{ name: string; review: CsvReview; dataOrigin: "synthetic" | "unknown" } | null>(null);
+  const [pending, setPending] = useState<{ name: string; review: CsvReview; dataOrigin: DataOrigin } | null>(null);
   const [selected, setSelected] = useState<SavedSession | null>(null);
   const [selectedSamples, setSelectedSamples] = useState<MotionSample[]>([]);
   const [report, setReport] = useState<SavedEvaluation | null>(null);
@@ -88,6 +97,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const previousSelectionRef = useRef(selected?.id);
   const workerRef = useRef<Worker | null>(null);
   const csvInput = useRef<HTMLInputElement>(null);
+  const csvImportOriginRef = useRef<DataOrigin>("unknown");
   const reportInput = useRef<HTMLInputElement>(null);
 
   const refresh = async () => {
@@ -163,7 +173,12 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const totalExcluded = useMemo(() => imports.reduce((sum, item) => sum + item.excludedCount, 0), [imports]);
   const pageName = page === "overview" ? "Field desk" : PAGES.find((item) => item.id === page)?.name ?? "Settings";
 
-  function beginCsv(file?: File, dataOrigin: "synthetic" | "unknown" = "unknown") {
+  function chooseCsv(dataOrigin: DataOrigin = "unknown") {
+    csvImportOriginRef.current = dataOrigin;
+    csvInput.current?.click();
+  }
+
+  function beginCsv(file?: File, dataOrigin: DataOrigin = "unknown") {
     if (!file) return;
     setError(""); setMessage(""); setPending(null);
     if (!file.name.toLowerCase().endsWith(".csv")) { setError("Choose a .csv file generated from the ParcelSense dataset schema."); return; }
@@ -188,11 +203,17 @@ function App({ offlineReady }: { offlineReady: boolean }) {
     worker.postMessage(file);
   }
 
-  function onCsvChange(event: ChangeEvent<HTMLInputElement>) { beginCsv(event.target.files?.[0]); event.target.value = ""; }
-  function onDrop(event: DragEvent<HTMLElement>) { event.preventDefault(); setDragging(false); beginCsv(event.dataTransfer.files[0]); }
+  function onCsvChange(event: ChangeEvent<HTMLInputElement>) {
+    const origin = csvImportOriginRef.current;
+    csvImportOriginRef.current = "unknown";
+    beginCsv(event.target.files?.[0], origin);
+    event.target.value = "";
+  }
+  function onDrop(event: DragEvent<HTMLElement>, dataOrigin: DataOrigin = "unknown") { event.preventDefault(); setDragging(false); beginCsv(event.dataTransfer.files[0], dataOrigin); }
 
-  async function confirmImport() {
+  async function confirmImport(boardOriginConfirmed = false) {
     if (!pending) return;
+    if (pending.dataOrigin === "real_board" && !boardOriginConfirmed) return;
     try {
       const saved = await saveImport(crypto.randomUUID(), pending.name, pending.review, pending.dataOrigin);
       setPending(null); setSelected(saved); setPage("sessions"); setMessage(`${saved.sampleCount.toLocaleString()} valid rows saved locally. The original file remains on your device.`); setError("");
@@ -203,20 +224,22 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   async function loadDemoCsv() {
     setDemoLoading(true); setError(""); setMessage("");
     try {
-      const csv = await getSyntheticDemoCsv();
+      const response = await fetch(`${import.meta.env.BASE_URL}samples/synthetic-demo.csv`, { headers: { Accept: "text/csv" } });
+      if (!response.ok) throw new Error(`Bundled sample request failed (${response.status}).`);
+      const csv = await response.text();
       beginCsv(new File([csv], "SYNTHETIC_DEMO_ONLY.csv", { type: "text/csv" }), "synthetic");
-      setMessage("Loaded generated demo data for review. These values are synthetic and are not STM32 readings.");
-    } catch (reason) { setError(`Synthetic sample unavailable. Start the local backend first. ${getErrorMessage(reason)}`); }
+      setMessage("Loaded the bundled synthetic sample for review. These values are not STM32 readings.");
+    } catch (reason) { setError(`Synthetic sample could not be loaded. ${getErrorMessage(reason)}`); }
     finally { setDemoLoading(false); }
   }
 
-  async function sendReviewedToBackend(item: SavedSession, origin: "synthetic" | "unknown") {
+  async function sendReviewedToBackend(item: SavedSession, origin: DataOrigin) {
     setBackendUploadId(item.id); setError(""); setMessage("");
     try {
       const samples = await getImportSamples(item.id);
       const csvText = makeSafeCsv(item.headers.length ? item.headers : CSV_HEADERS, samples, false);
       const saved = await uploadReviewedSession({ source_name: item.sourceName, csv_text: csvText, data_origin: origin });
-      const provenance = origin === "synthetic" ? "synthetic test data" : "unknown provenance";
+      const provenance = origin === "synthetic" ? "synthetic test data" : origin === "real_board" ? "user-declared STM32 capture (unverified)" : "unknown provenance";
       setMessage(`${saved.sample_count.toLocaleString()} reviewed rows copied to the local backend (${provenance}). This does not verify STM32 hardware.`);
       await refreshBackend();
     } catch (reason) { setError(`Could not send this reviewed copy to the local backend. ${getErrorMessage(reason)}`); }
@@ -329,8 +352,8 @@ function App({ offlineReady }: { offlineReady: boolean }) {
         {error && <div className="alert alert--error" role="alert"><Icon name="warning" /><span>{error}</span><button type="button" className="icon-button" onClick={() => setError("")} aria-label="Dismiss error"><Icon name="close" size={16} /></button></div>}
         {message && <div className="alert alert--success" role="status"><Icon name="check" /><span>{message}</span><button type="button" className="icon-button" onClick={() => setMessage("")} aria-label="Dismiss message"><Icon name="close" size={16} /></button></div>}
 
-        {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => csvInput.current?.click()} onOpen={(item) => void openImport(item)} onPage={setPage} />}
-        {page === "sessions" && <SessionsPage imports={imports} selected={selected} samples={selectedSamples} processing={processing} progress={progress} dragging={dragging} demoLoading={demoLoading} backendAvailable={backendState.available} backendUploadId={backendUploadId} onLoadDemo={() => void loadDemoCsv()} onUpload={(item, origin) => void sendReviewedToBackend(item, origin)} onChoose={() => csvInput.current?.click()} onBack={() => setSelected(null)} onDrop={onDrop} onDrag={handleDrag} onOpen={(item) => void openImport(item)} onDelete={(item) => void removeImport(item)} onExport={(item, safe) => void exportImport(item, safe)} onCancelParse={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }} />}
+        {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => chooseCsv()} onOpen={(item) => void openImport(item)} onPage={setPage} />}
+        {page === "sessions" && <SessionsPage imports={imports} selected={selected} samples={selectedSamples} processing={processing} progress={progress} dragging={dragging} demoLoading={demoLoading} captureMode={captureMode} onCaptureModeChange={setCaptureMode} backendAvailable={backendState.available} backendUploadId={backendUploadId} onLoadDemo={() => void loadDemoCsv()} onUpload={(item, origin) => void sendReviewedToBackend(item, origin)} onChoose={() => chooseCsv(captureMode === "stm32" ? "real_board" : "unknown")} onBack={() => setSelected(null)} onDrop={(event) => onDrop(event, captureMode === "stm32" ? "real_board" : "unknown")} onDrag={handleDrag} onOpen={(item) => void openImport(item)} onDelete={(item) => void removeImport(item)} onExport={(item, safe) => void exportImport(item, safe)} onCancelParse={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }} />}
         {page === "evaluation" && <EvaluationPage reports={evaluations} report={report} inputRef={reportInput} onImport={() => reportInput.current?.click()} onChange={(event) => void importReport(event.target.files?.[0])} onChoose={chooseReport} onDelete={(item) => void removeEvaluation(item)} />}
         {page === "device" && <DevicePage />}
         {page === "settings" && <SettingsPage imports={imports} evaluations={evaluations} storageInfo={storageInfo} requesting={requestingPersistence} deleting={deleting} backendState={backendState} backendRefreshing={backendRefreshing} backendDeleteId={backendDeleteId} onDeleteBackend={(item) => void removeBackendCopy(item)} onRefreshBackend={() => void refreshBackend()} onPersist={() => void requestPersistentStorage()} onDeleteAll={() => void deleteAllLocalData()} />}
@@ -340,7 +363,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
     <input ref={csvInput} className="visually-hidden" type="file" accept=".csv,text/csv" onChange={onCsvChange} aria-label="Choose a ParcelSense CSV file" />
     <input ref={reportInput} className="visually-hidden" type="file" accept=".json,application/json" onChange={(event) => void importReport(event.target.files?.[0])} aria-label="Choose a pipeline evaluation report" />
     {processing && <div className="processing-bar" role="status" aria-live="polite" aria-atomic="true"><span className="processing-spinner" aria-hidden="true" />Reading CSV in a background worker{progress !== null && <><span aria-hidden="true">{progress}%</span><span className="processing-progress" role="progressbar" aria-label="CSV import progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-valuetext={`${progress}%`} style={{ transform: `scaleX(${progress / 100})` }} /></>}<button type="button" onClick={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }}>Cancel</button></div>}
-    {pending && <ReviewDialog name={pending.name} review={pending.review} onCancel={() => setPending(null)} onSave={() => void confirmImport()} />}
+    {pending && <ReviewDialog name={pending.name} review={pending.review} dataOrigin={pending.dataOrigin} onCancel={() => setPending(null)} onSave={(boardConfirmed) => void confirmImport(boardConfirmed)} />}
   </div>;
 }
 
@@ -379,39 +402,47 @@ function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onOp
   </>;
 }
 
-function ImportDropzone({ dragging, onChoose, onDrop, onDrag, compact = false }: { dragging: boolean; onChoose: () => void; onDrop: (event: DragEvent<HTMLElement>) => void; onDrag: (event: DragEvent<HTMLElement>, active: boolean) => void; compact?: boolean }) {
+function ImportDropzone({ dragging, onChoose, onDrop, onDrag, compact = false, captureMode = "stm32" }: { dragging: boolean; onChoose: () => void; onDrop: (event: DragEvent<HTMLElement>) => void; onDrag: (event: DragEvent<HTMLElement>, active: boolean) => void; compact?: boolean; captureMode?: CaptureMode }) {
   return <section className={`dropzone ${dragging ? "is-dragging" : ""} ${compact ? "dropzone--compact" : ""}`} onDragOver={(event) => onDrag(event, true)} onDragLeave={(event) => onDrag(event, false)} onDrop={onDrop} aria-label="CSV import area">
-    <div className="dropzone-icon"><Icon name="upload" size={19} /></div><div className="dropzone-copy"><b>Bring in a capture file</b><span>Drop a CSV here or browse your device</span></div><button className="button button--outline" type="button" onClick={onChoose}>Browse files <Icon name="arrow" size={15} /></button>
+    <div className="dropzone-icon"><Icon name="upload" size={19} /></div><div className="dropzone-copy"><b>{captureMode === "stm32" ? "Import an STM32 capture CSV" : "Bring in a compatible CSV"}</b><span>Drop a file here or browse your device</span></div><button className="button button--outline" type="button" onClick={onChoose}>Browse files <Icon name="arrow" size={15} /></button>
     <small>ParcelSense schema v1.0 · UTF-8 CSV · Up to 25 MiB <span>· Safety cap not yet benchmarked on target phones</span></small>
   </section>;
 }
 
-function SessionsPage({ imports, selected, samples, processing, progress, dragging, demoLoading, backendAvailable, backendUploadId, onLoadDemo, onUpload, onChoose, onBack, onDrop, onDrag, onOpen, onDelete, onExport, onCancelParse }: { imports: SavedSession[]; selected: SavedSession | null; samples: MotionSample[]; processing: boolean; progress: number | null; dragging: boolean; demoLoading: boolean; backendAvailable: boolean; backendUploadId: string | null; onLoadDemo: () => void; onUpload: (item: SavedSession, origin: "synthetic" | "unknown") => void; onChoose: () => void; onBack: () => void; onDrop: (event: DragEvent<HTMLElement>) => void; onDrag: (event: DragEvent<HTMLElement>, active: boolean) => void; onOpen: (item: SavedSession) => void; onDelete: (item: SavedSession) => void; onExport: (item: SavedSession, safe: boolean) => void; onCancelParse: () => void }) {
+function SessionsPage({ imports, selected, samples, processing, progress, dragging, demoLoading, captureMode, onCaptureModeChange, backendAvailable, backendUploadId, onLoadDemo, onUpload, onChoose, onBack, onDrop, onDrag, onOpen, onDelete, onExport, onCancelParse }: { imports: SavedSession[]; selected: SavedSession | null; samples: MotionSample[]; processing: boolean; progress: number | null; dragging: boolean; demoLoading: boolean; captureMode: CaptureMode; onCaptureModeChange: (mode: CaptureMode) => void; backendAvailable: boolean; backendUploadId: string | null; onLoadDemo: () => void; onUpload: (item: SavedSession, origin: DataOrigin) => void; onChoose: () => void; onBack: () => void; onDrop: (event: DragEvent<HTMLElement>) => void; onDrag: (event: DragEvent<HTMLElement>, active: boolean) => void; onOpen: (item: SavedSession) => void; onDelete: (item: SavedSession) => void; onExport: (item: SavedSession, safe: boolean) => void; onCancelParse: () => void }) {
   return <>
-    <PageTitle overline="DATA WORKSPACE · 02" title="Data sessions" description="Review CSV data, validation notes, and source values." action={<div className="page-title-actions">{import.meta.env.DEV && <button className="button button--outline" type="button" onClick={onLoadDemo} disabled={demoLoading || !backendAvailable}>{demoLoading ? "Loading sample…" : "Load synthetic sample"}</button>}<button className="button button--primary" type="button" onClick={onChoose}><Icon name="upload" size={16} />Import CSV</button></div>} />
-    {import.meta.env.DEV && !backendAvailable && <p className="backend-hint" role="status">Start the local backend to load generated sample data and store reviewed copies. CSV import and browser-local review still work without it.</p>}
-    <ImportDropzone dragging={dragging} onChoose={onChoose} onDrop={onDrop} onDrag={onDrag} compact />
+    <PageTitle overline="DATA WORKSPACE · 02" title="Data sessions" description="Use the synthetic demo now, or review a compatible STM32 capture when hardware data is available." action={<div className="page-title-actions">{captureMode === "synthetic" ? <button className="button button--primary" type="button" onClick={onLoadDemo} disabled={demoLoading}>{demoLoading ? "Loading sample…" : "Load synthetic sample"}</button> : <button className="button button--primary" type="button" onClick={onChoose}><Icon name="upload" size={16} />Import STM32 CSV</button>}</div>} />
+    <fieldset className="capture-mode">
+      <legend>Choose data mode</legend>
+      <label className={captureMode === "synthetic" ? "is-selected" : ""}><input type="radio" name="capture-mode" value="synthetic" checked={captureMode === "synthetic"} onChange={() => onCaptureModeChange("synthetic")} /><span>Synthetic demo</span></label>
+      <label className={captureMode === "stm32" ? "is-selected" : ""}><input type="radio" name="capture-mode" value="stm32" checked={captureMode === "stm32"} onChange={() => onCaptureModeChange("stm32")} /><span>STM32 capture</span></label>
+    </fieldset>
+    <p className="capture-mode-description" role="status">{captureMode === "synthetic" ? "Loads a bundled 1,200-row software fixture. It is synthetic, not sensor data, and does not prove classifier performance." : "Imports a compatible CSV recorded elsewhere. Live STM32 connection and recording are not implemented; the app cannot verify a file’s source."}</p>
+    {import.meta.env.DEV && !backendAvailable && <p className="backend-hint" role="status">The optional local API is offline. Synthetic demo and CSV review work in the app; local API copies are unavailable.</p>}
+    <ImportDropzone dragging={dragging} onChoose={onChoose} onDrop={onDrop} onDrag={onDrag} compact captureMode={captureMode} />
     {processing && <div className="inline-progress"><span className="processing-spinner" />Processing in a background worker {progress === null ? "" : `${progress}%`}<button className="text-button" type="button" onClick={onCancelParse}>Cancel</button></div>}
     {selected ? <SessionDetail key={selected.id} item={selected} samples={samples} backendAvailable={backendAvailable} uploading={backendUploadId === selected.id} onUpload={(origin) => onUpload(selected, origin)} onExport={onExport} onDelete={onDelete} onBack={onBack} /> : <section className="data-list-section">
       <div className="section-heading section-heading--tight"><div><div className="eyebrow">LOCAL RECORDS · {imports.length.toString().padStart(2, "0")}</div><h2 tabIndex={-1}>Imported files</h2></div><span className="local-only"><span className="tiny-led" />THIS BROWSER ONLY</span></div>
       {imports.length ? <div className="session-list">{imports.map((item, index) => <button className="session-list-row" key={item.id} type="button" onClick={() => onOpen(item)}>
-        <span className="session-row-number">{String(index + 1).padStart(2, "0")}</span><span className="session-row-icon"><Icon name="file" /></span><span className="session-row-name"><b>{item.sourceName}</b><small>Imported {formatDate(item.importedAt)} · {item.sessionIds.length} {item.sessionIds.length === 1 ? "source session" : "source sessions"}</small></span><span className="session-row-count"><b>{item.sampleCount.toLocaleString()}</b><small>VALID ROWS</small></span><span className="session-row-issues">{item.excludedCount ? <StatusPill tone="alert">{item.excludedCount} issues</StatusPill> : <StatusPill tone="good">Clean import</StatusPill>}</span><Icon name="chevron" size={17} />
+        <span className="session-row-number">{String(index + 1).padStart(2, "0")}</span><span className="session-row-icon"><Icon name="file" /></span><span className="session-row-name"><b>{item.sourceName}</b><small>Imported {formatDate(item.importedAt)} · {item.sessionIds.length} {item.sessionIds.length === 1 ? "source session" : "source sessions"} · {originLabel(item.dataOrigin)}</small></span><span className="session-row-count"><b>{item.sampleCount.toLocaleString()}</b><small>VALID ROWS</small></span><span className="session-row-issues">{item.excludedCount ? <StatusPill tone="alert">{item.excludedCount} issues</StatusPill> : <StatusPill tone="good">Clean import</StatusPill>}</span><Icon name="chevron" size={17} />
       </button>)}</div> : <div className="large-empty"><EmptyMark icon="data" /><div><b>Your session archive starts here.</b><p>Import a CSV generated from the project schema. Invalid rows will be shown before anything is saved.</p></div><button className="button button--outline" type="button" onClick={onChoose}>Choose a CSV <Icon name="arrow" size={15} /></button></div>}
       <p className="privacy-caption"><Icon name="box" size={14} /> Imported records stay in browser storage. Keep your original files separately; browser storage is not a backup.</p>
     </section>}
   </>;
 }
 
-function SessionDetail({ item, samples, backendAvailable, uploading, onUpload, onExport, onDelete, onBack }: { item: SavedSession; samples: MotionSample[]; backendAvailable: boolean; uploading: boolean; onUpload: (origin: "synthetic" | "unknown") => void; onExport: (item: SavedSession, safe: boolean) => void; onDelete: (item: SavedSession) => void; onBack: () => void }) {
+function SessionDetail({ item, samples, backendAvailable, uploading, onUpload, onExport, onDelete, onBack }: { item: SavedSession; samples: MotionSample[]; backendAvailable: boolean; uploading: boolean; onUpload: (origin: DataOrigin) => void; onExport: (item: SavedSession, safe: boolean) => void; onDelete: (item: SavedSession) => void; onBack: () => void }) {
   const isSynthetic = item.dataOrigin === "synthetic";
-  const [dataOrigin, setDataOrigin] = useState<"synthetic" | "unknown">(item.dataOrigin ?? "unknown");
+  const isRealBoard = item.dataOrigin === "real_board";
+  const [dataOrigin, setDataOrigin] = useState<DataOrigin>(item.dataOrigin ?? "unknown");
   useEffect(() => { setDataOrigin(item.dataOrigin ?? "unknown"); }, [item.id, item.dataOrigin]);
   const labels = LABELS.map((label) => ({ label, count: samples.filter((sample) => sample.label === label).length }));
   return <section className="session-detail">
     <button className="text-button detail-back" type="button" onClick={onBack}><Icon name="chevron" size={14} />All imported files</button>
     <div className="detail-toolbar"><div><div className="eyebrow">IMPORT REVIEW · {item.schemaVersion}</div><h2 tabIndex={-1}>{item.sourceName}</h2><span className="detail-meta">Imported {formatDate(item.importedAt)} · {item.sessionIds.length} source session IDs</span></div><div className="detail-actions"><button className="button button--outline" type="button" onClick={() => onExport(item, false)}><Icon name="download" size={15} />Exact values</button><button className="button button--outline" type="button" onClick={() => onExport(item, true)}>Spreadsheet-safe</button><button className="icon-button icon-button--danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.sourceName}`}><Icon name="trash" size={16} /></button></div></div>
     {(isSynthetic || dataOrigin === "synthetic") && <div className="synthetic-note"><b>Synthetic data provenance.</b> Marked as generated software data; these values are not physical sensor readings or classifier evidence.</div>}
-    {import.meta.env.DEV && <div className="backend-upload-row"><div><span className="eyebrow">OPTIONAL LOCAL API COPY</span><p>Copies the reviewed valid rows to the local SQLite backend. Excluded source rows are not uploaded.</p></div><div className="backend-upload-controls"><label className="visually-hidden" htmlFor="backend-data-origin">Data provenance</label><select id="backend-data-origin" value={dataOrigin} onChange={(event) => setDataOrigin(event.target.value as "synthetic" | "unknown")} disabled={!backendAvailable || uploading || isSynthetic}><option value="unknown">Provenance unknown</option><option value="synthetic">Synthetic test data</option></select><button className="button button--outline" type="button" disabled={!backendAvailable || uploading || samples.length === 0} onClick={() => onUpload(dataOrigin)}>{uploading ? "Sending…" : "Send reviewed copy"}</button></div></div>}
+    {isRealBoard && <div className="board-origin-note"><b>STM32 origin declared by user · not verified.</b> The app cannot inspect how this CSV was recorded. Confirm the hardware, sensor units, and capture procedure before using it as real-device evidence.</div>}
+    {import.meta.env.DEV && <div className="backend-upload-row"><div><span className="eyebrow">OPTIONAL LOCAL API COPY</span><p>Copies the reviewed valid rows to the local SQLite backend. Excluded source rows are not uploaded.</p></div><div className="backend-upload-controls"><label className="visually-hidden" htmlFor="backend-data-origin">Data provenance</label><select id="backend-data-origin" value={dataOrigin} onChange={(event) => setDataOrigin(event.target.value as DataOrigin)} disabled={!backendAvailable || uploading || isSynthetic}><option value="unknown">Provenance unknown</option><option value="synthetic">Synthetic test data</option><option value="real_board" disabled={!isRealBoard}>User-declared STM32 · unverified</option></select><button className="button button--outline" type="button" disabled={!backendAvailable || uploading || samples.length === 0} onClick={() => onUpload(dataOrigin)}>{uploading ? "Sending…" : "Send reviewed copy"}</button></div></div>}
     <div className="detail-stats"><div><span>VALID ROWS</span><b>{item.sampleCount.toLocaleString()}</b></div><div><span>EXCLUDED ROWS</span><b>{item.excludedCount.toLocaleString()}</b></div><div><span>SOURCE RECORDS</span><b>{item.totalRecords.toLocaleString()}</b></div><div><span>SESSION IDS</span><b>{item.sessionIds.length.toString().padStart(2, "0")}</b></div></div>
     <div className="detail-two-col"><section className="subpanel"><div className="subpanel-heading"><div><span className="eyebrow">CLASS DISTRIBUTION</span><h3>Reviewed labels</h3></div><span>VALID ROWS</span></div>{labels.map(({ label, count }, index) => <div className="label-meter" key={label}><span className={`label-marker label-marker--${index}`} /><span>{label}</span><b>{count.toLocaleString()}</b><span className="meter-track"><i style={{ width: `${samples.length ? Math.max(count / samples.length * 100, count ? 2 : 0) : 0}%` }} /></span></div>)}<p className="muted-caption">Distribution describes imported labels; it does not describe classifier predictions.</p></section>
       <section className="subpanel"><div className="subpanel-heading"><div><span className="eyebrow">VALIDATION LOG</span><h3>{item.issues.length ? `${item.issues.length} notes` : "No exclusions"}</h3></div><span>{item.totalRecords} RECORDS</span></div>{item.issues.length ? <div className="issue-list">{item.issues.slice(0, 8).map((entry, index) => <IssueRow key={`${entry.rowNumber}-${index}`} issue={entry} />)}{item.issues.length > 8 && <div className="more-issues">+ {item.issues.length - 8} more notes saved with this import</div>}</div> : <p className="empty-note">Every imported row passed the available schema checks.</p>}</section></div>
@@ -485,7 +516,7 @@ function SettingsPage({ imports, evaluations, storageInfo, requesting, deleting,
       <div className="settings-panel-head"><div className="settings-symbol"><Icon name="box" /></div><div><span className="eyebrow">OPTIONAL BACKEND</span><h2>Local API connection</h2><p>The development API stores reviewed CSV copies in a SQLite file on this computer. It does not run on the hosted static PWA.</p></div><StatusPill tone={backendState.available ? "good" : "alert"}>{backendState.available ? "CONNECTED" : "NOT RUNNING"}</StatusPill></div>
       <div className="storage-stats"><div><span>API VERSION</span><b>{backendState.health?.api_version ?? "—"}</b></div><div><span>STORED COPIES</span><b>{backendState.sessions.length}</b></div><div><span>STORAGE</span><b>{backendState.health?.storage ?? "Unavailable"}</b></div><div><span>DEVICE LINK</span><b>Not connected</b></div></div>
       <div className="settings-actions"><button className="button button--outline" type="button" onClick={onRefreshBackend} disabled={backendRefreshing}>{backendRefreshing ? "Checking…" : "Check connection"}<Icon name="refresh" size={15} /></button><span>{backendState.error ?? "Uploads are explicit. Only reviewed valid rows are sent; the local API does not imply an STM32 connection."}</span></div>
-      {backendState.sessions.length > 0 && <div className="backend-session-list" aria-label="Sessions stored in the local backend">{backendState.sessions.map((session) => <div key={session.id}><span className="backend-session-copy"><b>{session.source_name}</b><small>{session.sample_count.toLocaleString()} rows · {session.data_origin === "synthetic" ? "Synthetic test data" : "Provenance unknown"}</small></span><button className="icon-button icon-button--danger" type="button" disabled={backendDeleteId === session.id} onClick={() => onDeleteBackend(session)} aria-label={`Delete ${session.source_name} from the local backend`} title="Delete backend copy"><Icon name="trash" size={16} /></button></div>)}</div>}
+      {backendState.sessions.length > 0 && <div className="backend-session-list" aria-label="Sessions stored in the local backend">{backendState.sessions.map((session) => <div key={session.id}><span className="backend-session-copy"><b>{session.source_name}</b><small>{session.sample_count.toLocaleString()} rows · {originLabel(session.data_origin)}</small></span><button className="icon-button icon-button--danger" type="button" disabled={backendDeleteId === session.id} onClick={() => onDeleteBackend(session)} aria-label={`Delete ${session.source_name} from the local backend`} title="Delete backend copy"><Icon name="trash" size={16} /></button></div>)}</div>}
     </section>}
     <section className="settings-panel"><div className="settings-panel-head"><div className="settings-symbol"><Icon name="box" /></div><div><span className="eyebrow">BROWSER STORAGE</span><h2>Local records stay here.</h2><p>Imports and evaluation reports are stored in this browser’s IndexedDB. They are not encrypted, backed up, or synchronized.</p></div></div>
       <div className="storage-stats"><div><span>USAGE</span><b>{formatBytes(storageInfo.usage)}</b></div><div><span>AVAILABLE QUOTA</span><b>{formatBytes(storageInfo.quota)}</b></div><div><span>PERSISTENCE</span><b>{storageInfo.persistent === undefined ? "Unknown" : storageInfo.persistent ? "Granted" : "Not granted"}</b></div><div><span>RECORD INVENTORY</span><b>{imports.length} imports · {evaluations.length} reports</b></div></div>
@@ -496,9 +527,11 @@ function SettingsPage({ imports, evaluations, storageInfo, requesting, deleting,
   </>;
 }
 
-function ReviewDialog({ name, review, onCancel, onSave }: { name: string; review: CsvReview; onCancel: () => void; onSave: () => void }) {
+function ReviewDialog({ name, review, dataOrigin, onCancel, onSave }: { name: string; review: CsvReview; dataOrigin: DataOrigin; onCancel: () => void; onSave: (boardOriginConfirmed: boolean) => void }) {
   const dialogRef = useRef<HTMLElement>(null);
   const warnings = review.issues.filter((entry) => entry.severity === "warning").length;
+  const [boardOriginConfirmed, setBoardOriginConfirmed] = useState(false);
+  useEffect(() => { setBoardOriginConfirmed(false); }, [name, dataOrigin]);
   useEffect(() => {
     const dialog = dialogRef.current;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -520,8 +553,9 @@ function ReviewDialog({ name, review, onCancel, onSave }: { name: string; review
     {review.fatalError ? <div className="fatal-error"><Icon name="warning" /><div><b>This file cannot be reviewed.</b><span>{review.fatalError}</span></div></div> : <>
       <div className="review-stats"><div><span>VALID ROWS</span><b>{review.samples.length.toLocaleString()}</b><small>Will be available to inspect</small></div><div><span>EXCLUDED ROWS</span><b className={review.excludedRowCount ? "text-alert" : ""}>{review.excludedRowCount.toLocaleString()}</b><small>Will not enter sample storage</small></div><div><span>NOTES</span><b>{warnings.toLocaleString()}</b><small>Warnings retained locally</small></div></div>
       <div className="review-split"><section><div className="eyebrow">VALIDATION NOTES · {review.issues.length}</div><div className="review-issues">{review.issues.length ? review.issues.slice(0, 5).map((entry, index) => <IssueRow key={`${entry.rowNumber}-${index}`} issue={entry} />) : <p className="empty-note">No validation issues found in {review.totalRecords} records.</p>}{review.issues.length > 5 && <p className="more-issues">+ {review.issues.length - 5} more; all notes will be saved</p>}</div></section><section><div className="eyebrow">SAMPLE PREVIEW · FIRST {Math.min(review.samples.length, 4)}</div>{review.samples.length ? <div className="review-sample-list">{review.samples.slice(0, 4).map((sample) => <div key={sample.rowNumber}><span>#{sample.rowNumber}</span><b>{sample.sessionId} / {sample.trialId}</b><LabelPill label={sample.label} /></div>)}</div> : <p className="empty-note">No valid rows. You may save the review notes only.</p>}</section></div>
+      {dataOrigin === "real_board" && <label className="origin-confirm"><input type="checkbox" checked={boardOriginConfirmed} onChange={(event) => setBoardOriginConfirmed(event.target.checked)} /><span><b>I declare this CSV was recorded using an STM32 board.</b><small>ParcelSense cannot verify the device or recording process. This import will be labeled “STM32 declared · unverified.”</small></span></label>}
     </>}
-    <div className="review-footer"><span><Icon name="box" size={14} />Original file remains unchanged on your device.</span><div><button className="button button--text" type="button" onClick={onCancel}>Cancel</button>{!review.fatalError && <button className="button button--primary" type="button" onClick={onSave}>Save reviewed import <Icon name="arrow" size={15} /></button>}</div></div>
+    <div className="review-footer"><span><Icon name="box" size={14} />Original file remains unchanged on your device.</span><div><button className="button button--text" type="button" onClick={onCancel}>Cancel</button>{!review.fatalError && <button className="button button--primary" type="button" disabled={dataOrigin === "real_board" && !boardOriginConfirmed} onClick={() => onSave(boardOriginConfirmed)}>Save reviewed import <Icon name="arrow" size={15} /></button>}</div></div>
   </section></div>;
 }
 

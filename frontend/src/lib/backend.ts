@@ -2,7 +2,7 @@ export interface BackendSession {
   id: string;
   source_name: string;
   created_at: string;
-  data_origin: "synthetic" | "unknown";
+  data_origin: "synthetic" | "real_board" | "unknown";
   session_ids: string[];
   sample_count: number;
   source_row_count: number;
@@ -57,7 +57,7 @@ export async function getSyntheticDemoCsv(): Promise<string> {
 export async function uploadReviewedSession(input: {
   source_name: string;
   csv_text: string;
-  data_origin: "synthetic" | "unknown";
+  data_origin: "synthetic" | "real_board" | "unknown";
 }): Promise<BackendSession> {
   assertLocalDevelopment();
   const response = await fetch("/api/sessions", {

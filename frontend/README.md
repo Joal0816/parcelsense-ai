@@ -1,6 +1,6 @@
 # ParcelSense Field Desk
 
-An optional local-first PWA for reviewing ParcelSense CSV sessions and pipeline evaluation reports. It is separate from STM32 firmware: no board transport, live capture, sensor diagnostics, or classifier is implemented here. An opt-in local development API supports demo data and reviewed CSV copies; it does not imply board connectivity.
+An optional local-first PWA for reviewing ParcelSense CSV sessions and pipeline evaluation reports. It is separate from STM32 firmware: no board transport, live capture, sensor diagnostics, or classifier is implemented here. The same app provides a bundled synthetic-demo mode and an STM32 capture CSV import mode. An opt-in local development API supports demo data and reviewed CSV copies; it does not imply board connectivity.
 
 ## Run locally
 
@@ -36,7 +36,9 @@ Set the Pages project root to `frontend`, the build command to `npm ci && npm ru
 - Preserves imported cell text for exact-value export and offers a spreadsheet-safe export. Formula protection applies only to text columns so negative sensor values remain numeric.
 - Loads pipeline `model.json` reports and shows model type, split counts, confusion matrices, per-class metrics, and explicit unknown provenance when the report lacks origin metadata.
 - Caches the static app shell for offline relaunch after a successful production visit.
-- Can load a synthetic-only CSV from the local API and explicitly send reviewed valid rows to its local SQLite store.
+- Loads a bundled 1,200-row synthetic fixture on hosted and local builds, and caches it with the offline app shell.
+- Imports compatible STM32 capture CSVs with an explicit user declaration labeled unverified; it does not connect to a board or verify file origin.
+- Can explicitly send reviewed valid rows to the optional local SQLite store.
 - Keeps device state unverified and live actions disabled until a physical board and interface are verified.
 
 The current import cap is 25 MiB with a 2 MiB synchronous fallback if Web Workers are unavailable. The cap is intentionally conservative and has not been benchmarked on target phones. Route/session focus, keyboard skip navigation, live connection/import status, larger touch controls, and reduced-motion handling are implemented. Quota recovery copy has a unit test; actual quota pressure, browser eviction, mobile assistive technology, and supported-device field validation remain pending.

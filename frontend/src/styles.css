@@ -361,9 +361,18 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .backend-session-copy { display: grid; min-width: 0; flex: 1; gap: 4px; }
 .backend-session-copy small { overflow: hidden; color: #526359; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .page-title-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.capture-mode { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: -13px 0 8px; padding: 0; border: 0; }
+.capture-mode legend { width: 100%; margin-bottom: 4px; color: #526359; font-size: 9px; font-weight: 700; }
+.capture-mode label { display: inline-flex; min-height: 38px; align-items: center; gap: 7px; padding: 0 12px; border: 1px solid #d6ded7; border-radius: 6px; background: #fafbf9; color: #34463e; font-size: 10px; font-weight: 620; cursor: pointer; }
+.capture-mode label:hover { border-color: #aebeb2; background: #fff; }
+.capture-mode label.is-selected { border-color: #507261; background: #edf3ef; color: #163b36; }
+.capture-mode input { width: 14px; height: 14px; margin: 0; accent-color: #2e755d; }
+.capture-mode-description { max-width: 760px; margin: 0 0 13px; color: #526359; font-size: 9px; line-height: 1.6; }
 .backend-hint { margin: -15px 0 18px; color: #526359; font-size: 9px; }
 .synthetic-note { margin-top: 13px; padding: 10px 12px; border: 1px solid #eedbcc; border-radius: 5px; background: #fff7f0; color: #744b39; font-size: 9px; line-height: 1.55; }
 .synthetic-note b { color: #835539; }
+.board-origin-note { margin-top: 13px; padding: 10px 12px; border: 1px solid #eedbcc; border-radius: 5px; background: #fff7f0; color: #744b39; font-size: 9px; line-height: 1.55; }
+.board-origin-note b { color: #835539; }
 .backend-upload-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 14px 0; padding: 12px; border: 1px solid #e1e8e1; border-radius: 6px; background: #f5f8f4; }
 .backend-upload-row > div:first-child { display: grid; gap: 4px; }
 .backend-upload-row p { max-width: 540px; margin: 0; color: #526359; font-size: 8px; line-height: 1.55; }
@@ -389,6 +398,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .review-stats small { color: #526359; font-size: 8px; }
 .review-split { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .review-split > section { min-width: 0; padding: 12px; border: 1px solid #e3e8e3; border-radius: 5px; background: #fff; }
+.origin-confirm { display: flex; align-items: flex-start; gap: 10px; margin-top: 13px; padding: 12px; border: 1px solid #eedbcc; border-radius: 6px; background: #fff7f0; color: #744b39; cursor: pointer; }
+.origin-confirm input { width: 16px; height: 16px; flex: 0 0 auto; margin: 1px 0 0; accent-color: #2e755d; }
+.origin-confirm span { display: grid; gap: 4px; }
+.origin-confirm b { font-size: 9px; }
+.origin-confirm small { color: #744b39; font-size: 8px; line-height: 1.5; }
 .review-issues { max-height: 195px; overflow: auto; margin-top: 7px; }
 .review-sample-list { display: grid; gap: 8px; margin-top: 12px; }
 .review-sample-list > div { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 5px; }
@@ -397,6 +411,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .review-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e2e8e2; }
 .review-footer > span { display: inline-flex; align-items: center; gap: 6px; color: #526359; font-size: 8px; }
 .review-footer > div { display: flex; gap: 6px; }
+.button:disabled { opacity: .56; cursor: not-allowed; }
 .fatal-error { display: flex; gap: 10px; margin: 17px 0; padding: 14px; border: 1px solid #efcbbb; border-radius: 6px; background: #fff4ed; color: #a35537; }
 .fatal-error > div { display: grid; gap: 4px; }.fatal-error b { font-size: 10px; }.fatal-error span { font-size: 9px; }
 .processing-bar { position: fixed; right: 20px; bottom: 18px; z-index: 5; display: flex; min-height: 43px; align-items: center; gap: 9px; padding: 0 11px; border: 1px solid #d2ddd3; border-radius: 7px; background: #fbfcf9; color: #55675c; box-shadow: 0 8px 25px rgba(26, 53, 41, .1); font-size: 9px; }
