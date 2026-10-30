@@ -1,0 +1,210 @@
+{
+  "data_counts": {
+    "excluded_records": 0,
+    "held_out_windows": 30,
+    "training_windows": 90,
+    "valid_windows": 120
+  },
+  "data_origin": "synthetic",
+  "evaluation": {
+    "decision_tree": {
+      "confusion_matrix": [
+        [
+          10,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0
+        ],
+        [
+          0,
+          0,
+          10
+        ]
+      ],
+      "macro_f1": 1.0,
+      "per_class": {
+        "Normal Handling": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 10
+        },
+        "Rough Handling": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 10
+        },
+        "Stable": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 10
+        }
+      },
+      "sample_count": 30
+    },
+    "threshold_baseline": {
+      "confusion_matrix": [
+        [
+          10,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0
+        ],
+        [
+          0,
+          0,
+          10
+        ]
+      ],
+      "macro_f1": 1.0,
+      "per_class": {
+        "Normal Handling": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 10
+        },
+        "Rough Handling": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 10
+        },
+        "Stable": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 10
+        }
+      },
+      "sample_count": 30
+    }
+  },
+  "feature_order": [
+    "mean_accel_x_m_s2",
+    "mean_accel_y_m_s2",
+    "mean_accel_z_m_s2",
+    "mean_gyro_x_rad_s",
+    "mean_gyro_y_rad_s",
+    "mean_gyro_z_rad_s",
+    "std_accel_x_m_s2",
+    "std_accel_y_m_s2",
+    "std_accel_z_m_s2",
+    "std_gyro_x_rad_s",
+    "std_gyro_y_rad_s",
+    "std_gyro_z_rad_s",
+    "rms_accel_x_m_s2",
+    "rms_accel_y_m_s2",
+    "rms_accel_z_m_s2",
+    "rms_gyro_x_rad_s",
+    "rms_gyro_y_rad_s",
+    "rms_gyro_z_rad_s",
+    "accel_norm_mean",
+    "accel_norm_std",
+    "accel_norm_rms",
+    "accel_norm_max",
+    "gyro_norm_rms",
+    "jerk_norm_rms"
+  ],
+  "labels": [
+    "Stable",
+    "Normal Handling",
+    "Rough Handling"
+  ],
+  "max_depth": 3,
+  "model_type": "bounded_cart_decision_tree",
+  "schema_version": "1.0",
+  "split": {
+    "group_key": [
+      "session_id",
+      "trial_id"
+    ],
+    "seed": 182,
+    "test_groups": [
+      [
+        "SYNTHETIC_ONLY_SEED_182",
+        "synthetic_normal_handling_01"
+      ],
+      [
+        "SYNTHETIC_ONLY_SEED_182",
+        "synthetic_rough_handling_01"
+      ],
+      [
+        "SYNTHETIC_ONLY_SEED_182",
+        "synthetic_stable_01"
+      ]
+    ],
+    "windows_by_class": {
+      "Normal Handling": {
+        "test": 10,
+        "train": 30
+      },
+      "Rough Handling": {
+        "test": 10,
+        "train": 30
+      },
+      "Stable": {
+        "test": 10,
+        "train": 30
+      }
+    }
+  },
+  "threshold_baseline": {
+    "normal_rough": 0.10737543756232983,
+    "stable_normal": 0.016419213787341763,
+    "training_class_medians": {
+      "Normal Handling": 0.029460113435272977,
+      "Rough Handling": 0.18529076168938668,
+      "Stable": 0.003378314139410546
+    }
+  },
+  "tree_nodes": [
+    {
+      "feature": 6,
+      "label": -1,
+      "left": 1,
+      "right": 2,
+      "threshold": 0.07167514719913932
+    },
+    {
+      "feature": -1,
+      "label": 0,
+      "left": -1,
+      "right": -1,
+      "threshold": 0.0
+    },
+    {
+      "feature": 6,
+      "label": -1,
+      "left": 3,
+      "right": 4,
+      "threshold": 0.4825670161084691
+    },
+    {
+      "feature": -1,
+      "label": 1,
+      "left": -1,
+      "right": -1,
+      "threshold": 0.0
+    },
+    {
+      "feature": -1,
+      "label": 2,
+      "left": -1,
+      "right": -1,
+      "threshold": 0.0
+    }
+  ],
+  "window_overlap": 0,
+  "window_samples": 100
+}

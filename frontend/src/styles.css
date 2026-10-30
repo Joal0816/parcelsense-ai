@@ -114,6 +114,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .workflow-guide li div { display: grid; gap: 4px; }
 .workflow-guide li b { color: #35473d; font-size: 10px; font-weight: 680; }
 .workflow-guide li small { max-width: 34ch; color: #526359; font-size: 9px; line-height: 1.5; }
+.synthetic-eval-callout { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; align-items: center; gap: 13px; margin: 0 0 22px; padding: 14px 15px; border: 1px solid #eedbcc; border-radius: 7px; background: #fff8f3; }
+.synthetic-eval-icon { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid #efd9ca; border-radius: 7px; background: #fff1e7; color: #965b40; }
+.synthetic-eval-copy { min-width: 0; }
+.synthetic-eval-copy h2 { margin: 0 0 4px; color: #5b3f31; font-size: 12px; font-weight: 700; }
+.synthetic-eval-copy p { max-width: 74ch; margin: 0; color: #694f42; font-size: 9px; line-height: 1.55; }
+.synthetic-eval-callout .button { min-height: 40px; white-space: nowrap; }
 .panel { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; }
 .welcome-panel { display: flex; min-height: 300px; flex-direction: column; align-items: flex-start; padding: 28px 30px 19px; background: var(--deep); color: #f5f5ed; }
 .welcome-panel::before { position: absolute; top: -95px; right: -20px; width: 350px; height: 350px; border: 1px solid rgba(222, 237, 221, .11); border-radius: 50%; content: ""; }
@@ -505,6 +511,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .workflow-guide ol { grid-template-columns: 1fr; }
   .workflow-guide li, .workflow-guide li:first-child { padding: 11px 0; border-right: 0; border-bottom: 1px solid #e3e8e3; }
   .workflow-guide li:last-child { border-bottom: 0; }
+  .synthetic-eval-callout { grid-template-columns: 32px 1fr; gap: 9px 11px; }
+  .synthetic-eval-icon { grid-column: 1; grid-row: 1 / span 3; align-self: start; }
+  .synthetic-eval-callout > .status-pill { justify-self: start; grid-column: 2; grid-row: 2; }
+  .synthetic-eval-callout > .button { justify-self: start; grid-column: 2; grid-row: 3; }
   .welcome-panel { min-height: 275px; padding: 21px 20px 15px; }
   .welcome-panel h2 { font-size: clamp(32px, 9vw, 39px); }
   .welcome-actions { width: 100%; }

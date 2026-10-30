@@ -4,9 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/sync-synthetic-report.mjs",
     "dev": "vite --host 127.0.0.1 --strictPort",
+    "predev:local": "node scripts/sync-synthetic-report.mjs",
     "dev:local": "node scripts/dev-local.mjs",
     "build": "tsc -b && vite build && node scripts/generate-sw.mjs",
+    "prebuild": "node scripts/sync-synthetic-report.mjs",
     "preview": "vite preview --host 127.0.0.1 --strictPort",
     "typecheck": "tsc -b --pretty false",
     "test": "node --experimental-strip-types tests/run.test.ts",

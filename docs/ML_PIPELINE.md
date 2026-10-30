@@ -2,7 +2,7 @@
 
 `ml/scripts/pipeline.py` provides a dependency-free host pipeline for schema-compatible CSV. It is not an acquisition program and there is no validated model trained on real ParcelSense board data. A separate synthetic-only dataset/model demonstrates the processing path; it is not a product model. See the [CSV schema](../ml/data/SCHEMA.md) and [draft capture protocol](../ml/data/CAPTURE_PROTOCOL.md).
 
-For an explicitly synthetic software demonstration, [`generate_synthetic.py`](../ml/scripts/generate_synthetic.py) creates a deterministic fixture with an adjacent provenance manifest. Train it with `--data-origin synthetic`; the exported report carries that provenance into the Field Desk. Synthetic metrics only demonstrate pipeline mechanics. See the [synthetic-only report](SYNTHETIC_ONLY_REPORT.md) and [dataset notes](../ml/data/synthetic/README.md).
+For an explicitly synthetic software demonstration, [`generate_synthetic.py`](../ml/scripts/generate_synthetic.py) creates a deterministic fixture with an adjacent provenance manifest. Train it with `--data-origin synthetic`; the exported report carries that provenance into the Field Desk. The frontend sync script bundles this report into the PWA at development/build time, where Overview can open it with one action. Synthetic metrics only demonstrate pipeline mechanics. See the [synthetic-only report](SYNTHETIC_ONLY_REPORT.md) and [dataset notes](../ml/data/synthetic/README.md).
 
 ## Processing and split
 

@@ -92,6 +92,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   const [backendUploadId, setBackendUploadId] = useState<string | null>(null);
   const [backendDeleteId, setBackendDeleteId] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [syntheticReportLoading, setSyntheticReportLoading] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const previousPageRef = useRef(page);
   const previousSelectionRef = useRef(selected?.id);
@@ -233,6 +234,28 @@ function App({ offlineReady }: { offlineReady: boolean }) {
     finally { setDemoLoading(false); }
   }
 
+  async function openSyntheticEvaluation() {
+    setSyntheticReportLoading(true); setError(""); setMessage("");
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}samples/synthetic-evaluation.json`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error(`Bundled report request failed (${response.status}).`);
+      const parsed = validateEvaluation(await response.json());
+      if (!parsed.report) throw new Error(parsed.error ?? "The bundled report is not supported.");
+      if (parsed.report.data_origin !== "synthetic") throw new Error("The bundled report is missing its synthetic provenance label.");
+      const sourceName = "Bundled synthetic-only evaluation";
+      const existing = evaluations.find((item) => item.sourceName === sourceName);
+      const saved = existing ?? await saveEvaluation(crypto.randomUUID(), sourceName, parsed.report);
+      setReport(saved);
+      setPage("evaluation");
+      setMessage("Synthetic report opened. Its scores describe generated signals only.");
+      if (!existing) await refresh();
+    } catch (reason) {
+      setError(`Could not open the bundled synthetic report. ${getErrorMessage(reason)}`);
+    } finally { setSyntheticReportLoading(false); }
+  }
+
   async function sendReviewedToBackend(item: SavedSession, origin: DataOrigin) {
     setBackendUploadId(item.id); setError(""); setMessage("");
     try {
@@ -352,7 +375,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
         {error && <div className="alert alert--error" role="alert"><Icon name="warning" /><span>{error}</span><button type="button" className="icon-button" onClick={() => setError("")} aria-label="Dismiss error"><Icon name="close" size={16} /></button></div>}
         {message && <div className="alert alert--success" role="status"><Icon name="check" /><span>{message}</span><button type="button" className="icon-button" onClick={() => setMessage("")} aria-label="Dismiss message"><Icon name="close" size={16} /></button></div>}
 
-        {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => chooseCsv()} onTryDemo={() => { setCaptureMode("synthetic"); setSelected(null); setPage("sessions"); void loadDemoCsv(); }} onOpen={(item) => void openImport(item)} onPage={setPage} />}
+        {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => chooseCsv()} onTryDemo={() => { setCaptureMode("synthetic"); setSelected(null); setPage("sessions"); void loadDemoCsv(); }} onOpenSyntheticReport={() => void openSyntheticEvaluation()} syntheticReportLoading={syntheticReportLoading} onOpen={(item) => void openImport(item)} onPage={setPage} />}
         {page === "sessions" && <SessionsPage imports={imports} selected={selected} samples={selectedSamples} processing={processing} progress={progress} dragging={dragging} demoLoading={demoLoading} captureMode={captureMode} onCaptureModeChange={setCaptureMode} backendAvailable={backendState.available} backendUploadId={backendUploadId} onLoadDemo={() => void loadDemoCsv()} onUpload={(item, origin) => void sendReviewedToBackend(item, origin)} onChoose={() => chooseCsv(captureMode === "stm32" ? "real_board" : "unknown")} onBack={() => setSelected(null)} onDrop={(event) => onDrop(event, captureMode === "stm32" ? "real_board" : "unknown")} onDrag={handleDrag} onOpen={(item) => void openImport(item)} onDelete={(item) => void removeImport(item)} onExport={(item, safe) => void exportImport(item, safe)} onCancelParse={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }} />}
         {page === "evaluation" && <EvaluationPage reports={evaluations} report={report} inputRef={reportInput} onImport={() => reportInput.current?.click()} onChange={(event) => void importReport(event.target.files?.[0])} onChoose={chooseReport} onDelete={(item) => void removeEvaluation(item)} />}
         {page === "device" && <DevicePage />}
@@ -367,7 +390,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   </div>;
 }
 
-function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onTryDemo, onOpen, onPage }: { imports: SavedSession[]; samples: number; excluded: number; offlineReady: boolean; onImport: () => void; onTryDemo: () => void; onOpen: (item: SavedSession) => void; onPage: (page: Page) => void }) {
+function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onTryDemo, onOpenSyntheticReport, syntheticReportLoading, onOpen, onPage }: { imports: SavedSession[]; samples: number; excluded: number; offlineReady: boolean; onImport: () => void; onTryDemo: () => void; onOpenSyntheticReport: () => void; syntheticReportLoading: boolean; onOpen: (item: SavedSession) => void; onPage: (page: Page) => void }) {
   const latest = imports[0];
   return <>
     <PageTitle overline="OPERATOR WORKSPACE · 01" title="A clearer view of every handling session." description="See how motion data review works with a synthetic sample, or import a compatible capture CSV." action={<button className="button button--primary" type="button" onClick={onImport}><Icon name="upload" size={16} />Import CSV</button>} />
@@ -395,6 +418,18 @@ function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onTr
         <li><span>2</span><div><b>Check the rows</b><small>Schema checks flag invalid or excluded values before saving.</small></div></li>
         <li><span>3</span><div><b>Understand the session</b><small>Review motion traces, supplied labels, and raw readings. No prediction runs here.</small></div></li>
       </ol>
+    </section>
+
+    <section className="synthetic-eval-callout" aria-labelledby="synthetic-eval-title">
+      <span className="synthetic-eval-icon"><Icon name="warning" size={18} /></span>
+      <div className="synthetic-eval-copy">
+        <h2 id="synthetic-eval-title">Inspect the synthetic model comparison</h2>
+        <p>Open the baseline and decision-tree report for 120 generated windows. Its scores demonstrate the software pipeline, not real parcel performance.</p>
+      </div>
+      <StatusPill tone="alert">SYNTHETIC</StatusPill>
+      <button className="button button--outline" type="button" onClick={onOpenSyntheticReport} disabled={syntheticReportLoading}>
+        {syntheticReportLoading ? "Opening report…" : "Show model report"}<Icon name="arrow" size={15} />
+      </button>
     </section>
 
     <div className="metric-strip" aria-label="Local workspace summary">

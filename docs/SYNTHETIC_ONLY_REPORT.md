@@ -99,7 +99,7 @@ python3 ml/scripts/pipeline.py train \
   --data-origin synthetic
 ```
 
-To demonstrate the visual CSV workflow, use **Overview → Try the synthetic demo** in the hosted Field Desk. To review the generated pipeline report, open **Evaluation review** and load `ml/models/synthetic/model.json`. Both are software demonstrations and should be identified as synthetic.
+To demonstrate the visual CSV workflow, use **Overview → Try the synthetic demo** in the hosted Field Desk. To review the generated pipeline report, select **Show model report** from the Overview page. The report is bundled with the app and marked synthetic. Both views are software demonstrations and should be identified as synthetic.
 
 ## 8. Google Classroom disclaimer
 

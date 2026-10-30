@@ -15,7 +15,7 @@ The hosted app has no server-side record store. Imported CSV data and evaluation
 
 - **Field desk**: workspace summary, recent import, device status, and a shortcut to evaluation reports.
 - **Data sessions**: import CSV files, review saved imports, inspect validation, export rows, and delete imports.
-- **Evaluation review**: load and inspect a pipeline `model.json` report.
+- **Evaluation review**: inspect the bundled synthetic pipeline report or load another pipeline `model.json` report.
 - **Device status**: see which hardware checks are pending. Live capture is disabled until the physical board and interface are verified.
 - **Settings & privacy**: inspect browser storage estimates, request persistent browser storage, and delete local project data. In local development, it also shows the optional API status and its stored copies.
 
@@ -91,7 +91,7 @@ Open the local URL printed by the command (normally <http://127.0.0.1:5173>). In
 
 ## Review a pipeline evaluation report
 
-The **Evaluation review** page accepts a pipeline `model.json` file. Select **Load report**, choose the JSON report, and review the model type, label and feature order, data counts, held-out metrics, confusion matrix, split details, and displayed data provenance. A generated pipeline report is included at `ml/models/synthetic/model.json`; it is marked synthetic and exists only to demonstrate this workflow. Reports are saved in this browser and can be removed with the delete control next to the selected report.
+From **Overview**, select **Show model report** to open the bundled synthetic evaluation without locating a file. The **Evaluation review** page also accepts another pipeline `model.json` file through **Load report**. Review model type, label and feature order, data counts, held-out metrics, confusion matrix, split details, and data provenance. The bundled report is marked synthetic and exists only to demonstrate this workflow. Reports are saved in this browser and can be removed with the delete control next to the selected report.
 
 Treat provenance and metrics carefully. A report marked `synthetic` is explicitly synthetic. A report marked `real_board` only declares that provenance; the Field Desk does not independently verify it. If provenance is missing, the app shows it as unknown. Metrics from generated or unknown-origin data do not establish real device performance.
 

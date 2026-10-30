@@ -75,4 +75,5 @@ When the board is available, finish the Phase 3 hardware gate by identifying the
 - Added `ml/scripts/generate_synthetic.py` and a checked-in 12,000-row dataset with an adjacent manifest that marks it `synthetic` and `measured_hardware: false`.
 - Ran the host pipeline on 120 generated windows (40 per label); its grouped split contains 30 training and 10 held-out synthetic windows per label. Both the threshold baseline and bounded tree scored 30/30 on the generated holdout. This deliberately easy simulation only demonstrates pipeline/report mechanics and says nothing about real-world performance.
 - Exported a synthetic-tagged `model.json` and `model.c` under `ml/models/synthetic/`; these files are not included in the PlatformIO firmware target.
+- Added a one-action Overview entry for the bundled synthetic evaluation report. The frontend build/dev hooks copy only a report explicitly tagged `data_origin: synthetic`, and the PWA app shell caches it for offline viewing.
 - Added a clearly scoped synthetic-only report and a copy-ready instructor disclaimer. Board diagnostics, real data, RT-Spark inference, and the live demonstration remain pending.
