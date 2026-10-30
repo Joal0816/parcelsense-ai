@@ -22,6 +22,9 @@ This index describes evidence currently in the repository and separates host/sof
 | `tests/phase5-frontend-e2e-readiness.log` | Chromium/Firefox semantics, responsive widths, offline app-shell checks. | Mobile screen-reader, Safari/iOS, or board behavior. |
 | `tests/phase5-doc-links.log` | Local Markdown links resolved in the current checkout. | External URL availability or factual review. |
 | `../docs/PWA_DEPLOYMENT.md` | Recorded web build, browser checks, and production release evidence. | Embedded offline inference or a live sensor link. |
+| `../ml/data/synthetic/activity4-synthetic-only.csv.manifest.json` and `../ml/models/synthetic/` | Reproducible generated-data parameters, synthetic provenance, extracted windows, split counts, model exports, and pipeline metrics. | Sensor readings, class validity, real-world model performance, or STM32 inference. |
+
+The generated dataset and model export are accompanied by [`../docs/SYNTHETIC_ONLY_REPORT.md`](../docs/SYNTHETIC_ONLY_REPORT.md). They are retained for the software demonstration and must not be counted as hardware evidence.
 
 New dated software checks should be added under `evidence/tests/` or `evidence/build/` and linked here. Record the exact command, revision, date, tool versions, exit status, and any warnings. Never replace a prior run in a way that removes its provenance.
 

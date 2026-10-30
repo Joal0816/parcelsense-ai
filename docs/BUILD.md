@@ -50,7 +50,7 @@ After adding the typed sensor interfaces and module registry, `pio run` passed a
 
 ## Phase 4 host pipeline
 
-See [ML pipeline guide](ML_PIPELINE.md) for the CSV schema, capture protocol, processing outputs, and evidence limits. The ML smoke test uses only temporary synthetic fixtures. It requires Python 3 standard library and a host C compiler for the C parity case; the compiler-specific test is skipped if `cc` is unavailable. No trained model or board dataset is committed.
+See [ML pipeline guide](ML_PIPELINE.md) for the CSV schema, capture protocol, processing outputs, and evidence limits. The ML smoke test uses temporary synthetic fixtures. It requires Python 3 standard library and a host C compiler for the C parity case; the compiler-specific test is skipped if `cc` is unavailable. No real-data-trained product model or board dataset is committed. The explicitly labeled synthetic demonstration dataset and exports live under `ml/data/synthetic/` and `ml/models/synthetic/` and are not linked into the firmware.
 
 ## Classifier integration preparation
 

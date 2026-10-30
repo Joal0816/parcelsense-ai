@@ -25,7 +25,7 @@
 
 - `ml/data/SCHEMA.md` defines required motion/session/label fields and optional context fields; `ml/data/CAPTURE_PROTOCOL.md` specifies an initial 50 Hz / 2-second procedure, pending sensor and instructor verification.
 - `ml/scripts/pipeline.py` implements validation, fault-aware windowing, 24 motion features, trial-group splitting with class minimums, threshold/tree comparison, held-out metrics, and C export.
-- `python3 -m unittest discover -s tests/ml -v`: **PASS**, 4 tests. Temporary `SYNTHETIC_TEST_ONLY` fixtures exercise segment breaks, leakage-safe split, report artifacts, the shared 24-feature ABI count, and compiled C/Python parity. No synthetic data or model artifacts are retained in the repository.
+- `python3 -m unittest discover -s tests/ml -v`: **PASS**, 4 tests. Temporary `SYNTHETIC_TEST_ONLY` fixtures exercise segment breaks, leakage-safe split, report artifacts, the shared 24-feature ABI count, and compiled C/Python parity. These test fixtures are distinct from the explicitly labeled synthetic-only demonstration dataset added later.
 - `sh tools/test_host.sh`: **PASS** with AddressSanitizer/UndefinedBehaviorSanitizer, including the classifier-adapter fixture. `pio run`: **PASS** on the current tree; PlatformIO reports 9,956 bytes Flash and 25,640 bytes RAM. The adapter has no caller in firmware tasks, so no model is linked. These remain link-time estimates, not runtime measurements.
 - Real board data, labeling definitions, model quality, and embedded performance are **PENDING**. Target-connected Phase 5 work has not started.
 
@@ -69,3 +69,10 @@
 ## Next step
 
 When the board is available, finish the Phase 3 hardware gate by identifying the RT-Spark revision and installed modules, verifying the schematic/pinout and bus mappings, and checking the board clock/debugger. Then run module diagnostics and capture labeled real trials using the reviewed Phase 4 protocol. Only after real held-out evaluation should the host-tested window inference path be connected to physical acquisition and a selected model. Do not assign pins from the MCU-only foundation profile.
+
+## Synthetic-only software package (2026-10-30)
+
+- Added `ml/scripts/generate_synthetic.py` and a checked-in 12,000-row dataset with an adjacent manifest that marks it `synthetic` and `measured_hardware: false`.
+- Ran the host pipeline on 120 generated windows (40 per label); its grouped split contains 30 training and 10 held-out synthetic windows per label. Both the threshold baseline and bounded tree scored 30/30 on the generated holdout. This deliberately easy simulation only demonstrates pipeline/report mechanics and says nothing about real-world performance.
+- Exported a synthetic-tagged `model.json` and `model.c` under `ml/models/synthetic/`; these files are not included in the PlatformIO firmware target.
+- Added a clearly scoped synthetic-only report and a copy-ready instructor disclaimer. Board diagnostics, real data, RT-Spark inference, and the live demonstration remain pending.

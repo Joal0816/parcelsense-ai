@@ -1,6 +1,8 @@
 # Offline Phase 4 ML pipeline
 
-`ml/scripts/pipeline.py` provides a dependency-free host pipeline for board-generated CSV. It is not an acquisition program and it does not contain a trained ParcelSense model. See the [CSV schema](../ml/data/SCHEMA.md) and [draft capture protocol](../ml/data/CAPTURE_PROTOCOL.md).
+`ml/scripts/pipeline.py` provides a dependency-free host pipeline for schema-compatible CSV. It is not an acquisition program and there is no validated model trained on real ParcelSense board data. A separate synthetic-only dataset/model demonstrates the processing path; it is not a product model. See the [CSV schema](../ml/data/SCHEMA.md) and [draft capture protocol](../ml/data/CAPTURE_PROTOCOL.md).
+
+For an explicitly synthetic software demonstration, [`generate_synthetic.py`](../ml/scripts/generate_synthetic.py) creates a deterministic fixture with an adjacent provenance manifest. Train it with `--data-origin synthetic`; the exported report carries that provenance into the Field Desk. Synthetic metrics only demonstrate pipeline mechanics. See the [synthetic-only report](SYNTHETIC_ONLY_REPORT.md) and [dataset notes](../ml/data/synthetic/README.md).
 
 ## Processing and split
 
@@ -23,7 +25,19 @@ python3 ml/scripts/pipeline.py train \
   --window-samples 100
 ```
 
-At 50 Hz, 100 samples represent a nominal 2-second window; verify the actual sample cadence on the board before treating that duration as measured. The command writes `windows_features.csv`, `exclusions.csv`, `model.json`, and `model.c` into the chosen output directory. Review data privacy before processing or sharing recordings. Generated processed/model artifacts are ignored by Git by default.
+The synthetic alternative can be reproduced with:
+
+```sh
+python3 ml/scripts/generate_synthetic.py \
+  --output ml/data/synthetic/activity4-synthetic-only.csv --seed 182
+python3 ml/scripts/pipeline.py train \
+  --input ml/data/synthetic/activity4-synthetic-only.csv \
+  --output-dir ml/models/synthetic \
+  --window-samples 100 --min-train 30 --min-test 10 --seed 182 \
+  --data-origin synthetic
+```
+
+At 50 Hz, 100 samples represent a nominal 2-second window; verify the actual sample cadence on the board before treating that duration as measured. The command writes `windows_features.csv`, `exclusions.csv`, `model.json`, and `model.c` into the chosen output directory. Review data privacy before processing or sharing recordings. Raw recordings and ordinary processed/model artifacts are ignored by Git by default; the clearly named synthetic demonstration CSV and synthetic model report are tracked separately for reproducibility.
 
 ## Evidence boundary
 

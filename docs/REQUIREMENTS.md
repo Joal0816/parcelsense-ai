@@ -2,6 +2,8 @@
 
 This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observable deliverables. Every hardware result remains **PENDING** until it is collected and recorded. Phase 1 defined the plan; Phase 2 added and compiled a hardware-independent firmware foundation.
 
+The repository now also includes a reproducible synthetic-only dataset/model demonstration. It is deliberately kept separate from hardware evidence and does not satisfy requirements for board-collected data, target inference, or a live RT-Spark prototype. See [the synthetic-only report](SYNTHETIC_ONLY_REPORT.md).
+
 | Requirement | Measurable deliverable | Evidence location / acceptance |
 |---|---|---|
 | Offline package-handling classification | Three output labels: Stable, Normal Handling, Rough Handling; prediction path works without network access | `evidence/tests/`; demonstrate offline operation for at least 5 minutes (Phase 6) |
@@ -39,7 +41,7 @@ This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observ
 
 - `ml/data/SCHEMA.md` defines the CSV fields, units, labels, and invalid-row behavior; `ml/data/CAPTURE_PROTOCOL.md` records a draft safe procedure at an initial 50 Hz / 2-second window target, pending hardware and instructor verification.
 - `ml/scripts/pipeline.py` validates rows, breaks windows at invalid samples, records exclusions, extracts 24 motion features, splits by session/trial, enforces 30 train and 10 held-out windows per class, compares a median-based threshold baseline with a bounded depth-3 tree, reports confusion/per-class precision/recall/macro-F1, and exports compact C plus JSON metadata.
-- `python3 -m unittest discover -s tests/ml -v` creates only temporary `SYNTHETIC_TEST_ONLY` fixtures and checks window segmentation, group separation, artifact generation, and Python/C prediction parity. These checks do not count as a dataset or performance evidence.
+- `python3 -m unittest discover -s tests/ml -v` creates temporary `SYNTHETIC_TEST_ONLY` fixtures and checks window segmentation, group separation, artifact generation, and Python/C prediction parity. These test fixtures do not count as a dataset or performance evidence. The separate retained synthetic-only demonstration dataset and model are documented in [the synthetic-only report](SYNTHETIC_ONLY_REPORT.md); their metrics also do not count as real-data evidence.
 - Board-generated data, real held-out results, approved operational label definitions, verified sampling rate, and any useful context-sensor contribution remain **PENDING** until the RT-Spark and installed sensors are available.
 
 ## Phase 5 software deliverables

@@ -1,0 +1,37 @@
+{
+  "data_origin": "synthetic",
+  "generator": "ml/scripts/generate_synthetic.py",
+  "generator_version": "1.0",
+  "seed": 182,
+  "sample_rate_hz": 50,
+  "window_samples": 100,
+  "windows_per_trial": 10,
+  "trials_per_class": 4,
+  "labels": [
+    "Stable",
+    "Normal Handling",
+    "Rough Handling"
+  ],
+  "samples_per_class": 4000,
+  "total_samples": 12000,
+  "measured_hardware": false,
+  "signal_definition": {
+    "Stable": {
+      "nominal_motion_amplitude_m_s2": 0.012,
+      "noise_std": 0.003
+    },
+    "Normal Handling": {
+      "nominal_motion_amplitude_m_s2": 0.2,
+      "noise_std": 0.015
+    },
+    "Rough Handling": {
+      "nominal_motion_amplitude_m_s2": 1.25,
+      "noise_std": 0.09
+    }
+  },
+  "limitations": [
+    "Generated signals are not physical sensor readings.",
+    "Class patterns are deliberately distinct to exercise processing mechanics.",
+    "Metrics from this dataset do not estimate real-world or board performance."
+  ]
+}

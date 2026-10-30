@@ -27,7 +27,7 @@ Use the Python standard library for the backend/ML tests. Frontend commands requ
 - The C feature extractor must match `ml/scripts/pipeline.py` feature order and values within floating-point tolerance for the host parity fixtures.
 - Invalid, non-finite, missing, or out-of-order samples must not yield a class. Every failure returns an unavailable state from the inference boundary.
 - Model callback fixtures are test-only. No deterministic test callback is linked as a production model.
-- Synthetic test data is temporary and clearly named. A passing synthetic smoke test does not produce real-data metrics or a trained ParcelSense model.
+- Synthetic test fixtures are temporary and clearly named. The separate retained synthetic demonstration model is marked `data_origin: synthetic`; neither it nor a passing synthetic smoke test provides real-data metrics or a validated product model.
 - Browser imports remain local by default. Sending a reviewed copy is an explicit local-development action; the production PWA does not persist records on the server.
 
 ## Hardware-gated acceptance

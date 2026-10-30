@@ -1,6 +1,6 @@
 # Planned architecture
 
-The system is organized as **Sense → Process → Infer → Act → Record**. Phase 2 provides task and data-flow placeholders. No sensor drivers, trained model, or physical feedback is implemented.
+The system is organized as **Sense → Process → Infer → Act → Record**. Phase 2 provides task and data-flow placeholders. No sensor drivers, real-data-trained product model, or physical feedback is implemented. A synthetic-only model export exists for the host workflow and is not part of the firmware target.
 
 1. **Sense:** Acquire timestamped motion readings from the verified onboard IMU and optional verified context sensors. Attach units and validity/error status. Never assume a sensor, bus, or pin before inspection.
 2. **Process:** Validate samples, handle missing/invalid values, form fixed-duration windows, and apply the same documented features and scaling used during model training.

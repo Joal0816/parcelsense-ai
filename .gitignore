@@ -54,3 +54,10 @@ ml/data/processed/*
 !ml/data/processed/.gitkeep
 ml/models/*
 !ml/models/.gitkeep
+!ml/models/synthetic/
+ml/models/synthetic/*
+!ml/models/synthetic/README.md
+!ml/models/synthetic/*.json
+!ml/models/synthetic/*.c
+!ml/models/synthetic/windows_features.csv
+!ml/models/synthetic/exclusions.csv

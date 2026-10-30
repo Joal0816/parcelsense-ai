@@ -479,7 +479,10 @@ def write_csv(path: Path, columns: tuple[str, ...], rows: Iterable[dict[str, obj
 
 
 def train_dataset(input_path: Path, output_dir: Path, *, window_samples: int = 100,
-                  min_train: int = 30, min_test: int = 10, seed: int = 182) -> dict[str, object]:
+                  min_train: int = 30, min_test: int = 10, seed: int = 182,
+                  data_origin: str = "unknown") -> dict[str, object]:
+    if data_origin not in ("synthetic", "real_board", "unknown"):
+        raise ValueError("data_origin must be synthetic, real_board, or unknown")
     trials, exclusions = read_trials(input_path)
     windows, window_exclusions = make_windows(trials, window_samples)
     exclusions.extend(window_exclusions)
@@ -495,6 +498,7 @@ def train_dataset(input_path: Path, output_dir: Path, *, window_samples: int = 1
     nodes = tree_nodes(tree)
     model: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
+        "data_origin": data_origin,
         "model_type": "bounded_cart_decision_tree",
         "max_depth": 3,
         "window_samples": window_samples,
@@ -532,16 +536,21 @@ def main(argv: list[str] | None = None) -> int:
     train_parser.add_argument("--min-train", type=int, default=30)
     train_parser.add_argument("--min-test", type=int, default=10)
     train_parser.add_argument("--seed", type=int, default=182)
+    train_parser.add_argument("--data-origin", choices=("synthetic", "real_board", "unknown"),
+                              default="unknown",
+                              help="user-declared report provenance; defaults to unknown")
     args = parser.parse_args(argv)
     try:
         model = train_dataset(args.input, args.output_dir, window_samples=args.window_samples,
-                              min_train=args.min_train, min_test=args.min_test, seed=args.seed)
+                              min_train=args.min_train, min_test=args.min_test, seed=args.seed,
+                              data_origin=args.data_origin)
     except (OSError, ValueError, csv.Error) as error:
         print(f"pipeline error: {error}", file=sys.stderr)
         return 2
     print(json.dumps({"data_counts": model["data_counts"],
                       "evaluation": model["evaluation"],
-                      "model_type": model["model_type"]}, indent=2))
+                      "model_type": model["model_type"],
+                      "data_origin": model["data_origin"]}, indent=2))
     return 0
 
 

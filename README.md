@@ -24,7 +24,7 @@ The project selection and tradeoffs are summarized in [project rationale](docs/P
 ## Repository map
 
 - `firmware/`: future embedded application and board notes.
-- `ml/`: future board-generated data, processing scripts, and exported models.
+- `ml/`: processing scripts, a clearly labeled synthetic-only demonstration dataset/model, and reserved locations for future board-generated data and real model exports.
 - `tests/`: future host unit and system integration tests.
 - `frontend/`: local-first PWA with synthetic-demo and STM32-capture CSV review modes; no device transport is implemented.
 - `backend/`: optional loopback development API for synthetic demo CSV and explicit reviewed-session storage; no STM32 link is implemented.
@@ -49,3 +49,5 @@ The Field Desk is live at [parcelsense-ai.pages.dev](https://parcelsense-ai.page
 ## Development phases
 
 The six phases, measurable deliverables, and acceptance evidence are tracked in [the roadmap](docs/ROADMAP.md) and [requirements matrix](docs/REQUIREMENTS.md). The current phase status is in [progress](docs/PROGRESS.md).
+
+For the board-unavailable case, see the explicitly **synthetic-only software report** in [docs/SYNTHETIC_ONLY_REPORT.md](docs/SYNTHETIC_ONLY_REPORT.md). Its generated data and model artifacts demonstrate the host pipeline only; they do not replace the lab's real board, real-data, on-device inference, or live demonstration requirements.
