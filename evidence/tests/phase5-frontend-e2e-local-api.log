@@ -1,0 +1,16 @@
+
+> parcelsense-companion@0.1.0 e2e:local-api
+> node scripts/e2e-local-api.mjs
+
+✓ PWA started against an isolated SQLite database
+✓ synthetic CSV loaded, reviewed, and saved in browser storage
+✓ explicit reviewed copy stored by the local API with synthetic provenance
+✓ backend copy deleted while the browser-local import remains available
+✓ backend copy deletion preserved the browser-local import
+✓ browser-local review remains available when the local API is stopped
+✓ end-to-end local API flow passed
+npm notice
+npm notice New major version of npm available! 11.19.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice

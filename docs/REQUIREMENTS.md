@@ -11,7 +11,7 @@ This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observ
 | Dataset sufficiency and leakage control | At least 30 training and 10 held-out windows per class, split by session/trial; record exclusions and class balance | Dataset manifest and split report, Phase 4 |
 | Sensor/module diagnostics | Each physically present and supported sensor/UI module receives a repeatable detection/self-test with pass/fail/fault result; absent hardware is reported | Inventory plus diagnostic logs; Phase 3 |
 | Baseline comparison | Compare a documented threshold baseline with one or more compact trained classifiers using held-out real trials | Confusion matrix, per-class precision/recall, macro-F1, error analysis; Phase 4 |
-| Offline embedded inference | Exported model and fixed preprocessing run on target with validated inputs and no network dependency | Firmware integration and offline test log; Phase 5/6 |
+| Offline embedded inference | Portable preprocessing/model callback composition accepts validated motion windows; an evaluated model and fixed preprocessing run on target with validated inputs and no network dependency | Host feature parity tests cover the software portion; target model integration and offline test log remain pending for Phase 5/6 |
 | Latency | At least 50 on-board inference timing observations; report median and p95 plus sampling-to-response latency | Raw timing log and summary in `evidence/tests/`; Phase 5/6 |
 | Memory | Report compiled Flash and RAM sections, FreeRTOS heap use, and task stack high-water marks; distinguish link-time from runtime values | Build map/size output and diagnostic logs in `evidence/build/` and `evidence/logs/`; Phase 2/5 |
 | Reliability / fault handling | At least 15-minute continuous run and controlled sensor/data fault test; document recovery and observed behavior | Timestamped logs and test record in `evidence/tests/`; Phase 6 |
@@ -41,3 +41,16 @@ This matrix turns the BCA182 Laboratory Activity No. 4 project goals into observ
 - `ml/scripts/pipeline.py` validates rows, breaks windows at invalid samples, records exclusions, extracts 24 motion features, splits by session/trial, enforces 30 train and 10 held-out windows per class, compares a median-based threshold baseline with a bounded depth-3 tree, reports confusion/per-class precision/recall/macro-F1, and exports compact C plus JSON metadata.
 - `python3 -m unittest discover -s tests/ml -v` creates only temporary `SYNTHETIC_TEST_ONLY` fixtures and checks window segmentation, group separation, artifact generation, and Python/C prediction parity. These checks do not count as a dataset or performance evidence.
 - Board-generated data, real held-out results, approved operational label definitions, verified sampling rate, and any useful context-sensor contribution remain **PENDING** until the RT-Spark and installed sensors are available.
+
+## Phase 5 software deliverables
+
+- `firmware/src/features.c` implements the ordered 24-feature ABI from validated motion windows, including centered population standard deviation, RMS, magnitude features, and timestamp-aware jerk.
+- `firmware/src/inference.c` composes the feature extractor with the validated model callback boundary; failures preserve `UI_STATE_UNAVAILABLE`.
+- Host tests cover the feature formulas, uint32 timestamp wrap, invalid samples, feature ordering/value parity with Python, and callback-to-class mapping. Fixtures are synthetic and are not linked as a production model.
+- Actual sensor-window acquisition, a selected real-data model, task connection, local hardware feedback, measured execution time, and runtime memory remain **PENDING** until board and real-data gates are satisfied.
+
+## Phase 6 software/documentation deliverables
+
+- `docs/TEST_PLAN.md`, `docs/DEMO_SCRIPT.md`, `docs/REPORT_OUTLINE.md`, `docs/PROJECT_RATIONALE.md`, `docs/ATTRIBUTION.md`, and `evidence/README.md` provide the software handoff and evidence boundaries.
+- `tools/check_docs.py` checks relative Markdown file links and runs in CI. It does not validate external URLs or replace review of technical claims.
+- The documentation link job is included in CI and blocks production deployment if it fails. Verify the current revision's release job after publishing; board-only acceptance remains pending.

@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdio.h>
 #include "classifier.h"
+#include "inference.h"
+#include "motion_features.h"
 #include "foundation.h"
 #include "log_buffer.h"
 #include "hardware/module_diagnostics.h"
@@ -10,11 +12,17 @@
 
 static int model_fixture_result;
 static unsigned model_fixture_calls;
+static bool model_fixture_check_mean;
+static float model_fixture_expected_mean;
 
 /* Deterministic ABI fixture only; it is not a trained ParcelSense model. */
 static int model_fixture_predict(const float *features, size_t count)
 {
     assert(features != NULL && count == PARCELSENSE_FEATURE_COUNT);
+    if (model_fixture_check_mean) {
+        assert(fabsf(features[PARCEL_FEATURE_MEAN_ACCEL_X_M_S2] -
+                     model_fixture_expected_mean) < 1e-6f);
+    }
     model_fixture_calls++;
     return model_fixture_result;
 }
@@ -111,6 +119,50 @@ int main(void)
     mock.motion_fixture.valid = false;
     assert(imu_read_sample(&imu_interface, &readback) == PARCEL_STATUS_UNAVAILABLE);
     assert(motion_sample_validate(NULL) == PARCEL_STATUS_INVALID_ARGUMENT);
+
+    MotionSample feature_window[] = {
+        {.timestamp_ms = UINT32_MAX - 10U, .status = PARCEL_STATUS_OK, .valid = true,
+         .acceleration_m_s2 = {0.0f, 0.0f, 0.0f},
+         .angular_velocity_rad_s = {0.0f, 0.0f, 0.0f}},
+        {.timestamp_ms = 9U, .status = PARCEL_STATUS_OK, .valid = true,
+         .acceleration_m_s2 = {2.0f, 0.0f, 0.0f},
+         .angular_velocity_rad_s = {0.0f, 2.0f, 0.0f}},
+    };
+    float extracted[PARCELSENSE_FEATURE_COUNT];
+    for (size_t i = 0U; i < PARCELSENSE_FEATURE_COUNT; ++i) extracted[i] = -1.0f;
+    assert(parcelsense_extract_features(feature_window, 2U, extracted) == PARCEL_STATUS_OK);
+    assert(fabsf(extracted[PARCEL_FEATURE_MEAN_ACCEL_X_M_S2] - 1.0f) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_STD_ACCEL_X_M_S2] - 1.0f) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_RMS_ACCEL_X_M_S2] - sqrtf(2.0f)) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_ACCEL_NORM_MEAN] - 1.0f) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_ACCEL_NORM_STD] - 1.0f) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_ACCEL_NORM_MAX] - 2.0f) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_GYRO_NORM_RMS] - sqrtf(2.0f)) < 1e-6f);
+    assert(fabsf(extracted[PARCEL_FEATURE_JERK_NORM_RMS] - 100.0f) < 1e-6f);
+    model_fixture_result = 2;
+    model_fixture_check_mean = true;
+    model_fixture_expected_mean = 1.0f;
+    const unsigned calls_before_window_inference = model_fixture_calls;
+    assert(parcelsense_infer_window(feature_window, 2U, model_fixture_predict,
+                                    &classification) == PARCEL_STATUS_OK);
+    assert(classification == UI_STATE_ROUGH_HANDLING);
+    assert(model_fixture_calls == calls_before_window_inference + 1U);
+    model_fixture_check_mean = false;
+    assert(parcelsense_infer_window(feature_window, 2U, NULL,
+                                    &classification) == PARCEL_STATUS_NOT_INITIALIZED);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    feature_window[1].timestamp_ms = feature_window[0].timestamp_ms;
+    assert(parcelsense_extract_features(feature_window, 2U, extracted) == PARCEL_STATUS_INVALID_DATA);
+    for (size_t i = 0U; i < PARCELSENSE_FEATURE_COUNT; ++i) assert(extracted[i] == 0.0f);
+    assert(parcelsense_infer_window(feature_window, 2U, model_fixture_predict,
+                                    &classification) == PARCEL_STATUS_INVALID_DATA);
+    assert(classification == UI_STATE_UNAVAILABLE);
+    feature_window[1].timestamp_ms = 9U;
+    feature_window[1].valid = false;
+    assert(parcelsense_extract_features(feature_window, 2U, extracted) == PARCEL_STATUS_INVALID_DATA);
+    assert(parcelsense_extract_features(NULL, 2U, extracted) == PARCEL_STATUS_INVALID_ARGUMENT);
+    assert(parcelsense_extract_features(feature_window, 0U, extracted) == PARCEL_STATUS_INVALID_ARGUMENT);
+    assert(parcelsense_extract_features(feature_window, 1U, NULL) == PARCEL_STATUS_INVALID_ARGUMENT);
     MotionSample untouched = {0};
     ImuInterface unbound_imu = {0};
     assert(imu_read_sample(&unbound_imu, &untouched) == PARCEL_STATUS_NOT_INITIALIZED);
@@ -160,6 +212,6 @@ int main(void)
     assert(module_diagnostics_get(&registry, MODULE_AP3216C_LIGHT_PROXIMITY)->health == MODULE_HEALTH_ABSENT);
     assert(module_diagnostics_get(&registry, MODULE_AHT10_ENVIRONMENT)->health == MODULE_HEALTH_UNVERIFIED);
 
-    puts("PASS: classifier adapter, sensor validation, safe unverified inventory, module faults, and log buffer");
+    puts("PASS: feature extraction, classifier adapter, sensor validation, safe unverified inventory, module faults, and log buffer");
     return 0;
 }

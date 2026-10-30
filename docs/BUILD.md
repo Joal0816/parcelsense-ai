@@ -4,6 +4,22 @@
 
 Use PlatformIO Core with the versions pinned in `platformio.ini`: `ststm32` 20.0.0, STM32CubeF4 1.28.3, and the ARM GCC 12.3.1 package. `pio run` resolves missing packages through PlatformIO; the Phase 2 build used packages already installed locally. No UART, upload, or board connection is needed for compilation. Host checks use `cc` plus AddressSanitizer and UndefinedBehaviorSanitizer.
 
+### Arch Linux setup
+
+Install the host tools from the Arch repositories, then use a Python virtual environment for PlatformIO so the system-managed Python installation is not modified:
+
+```sh
+sudo pacman -S --needed base-devel git python python-pip nodejs npm
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install platformio
+pio --version
+node --version
+npm --version
+```
+
+Vite 8 requires Node.js 22.12 or newer. If the `nodejs` package on the machine is older, install a supported Node version with a user-level version manager before running the frontend. PlatformIO downloads the pinned embedded platform/toolchain packages on first build; allow network access for that step.
+
 ## Commands
 
 From the repository root:
@@ -39,3 +55,7 @@ See [ML pipeline guide](ML_PIPELINE.md) for the CSV schema, capture protocol, pr
 ## Classifier integration preparation
 
 `firmware/src/classifier.c` validates the 24-feature model ABI emitted by the pipeline and maps valid model result indices to the three UI states. It rejects invalid inputs/results while keeping the output unavailable. `InferenceTask` does not call this adapter; no trained model is linked. The `pio run` smoke build on the current tree passed with 9,956 bytes Flash and 25,640 bytes RAM reported. A cross-language test checks that the firmware feature count matches the pipeline feature list. These checks validate interfaces only, not prediction quality, target execution, or runtime memory.
+
+The portable `firmware/src/features.c` implementation computes the same 24 population-statistics features as the Python pipeline. `firmware/src/inference.c` composes sample-window validation, feature extraction, and the model callback into a host-testable path. Host parity tests compare each C feature to the Python implementation on temporary synthetic fixtures. These modules are compiled into the MCU image but are not called by `InferenceTask`: no verified sensor backend, real-data model, or board execution is available. Their presence establishes software parity only, not target accuracy or runtime cost.
+
+Current clean compile after adding the portable feature/inference modules: `PLATFORMIO_CORE_DIR=/tmp/parcelsense-platformio pio run` — **PASS**, PlatformIO Core 6.2.0, `ststm32` 20.0.0, STM32CubeF4 1.28.3, ARM GCC 12.3.1; reports 9,976 bytes Flash and 25,640 bytes RAM. Full output: `../evidence/build/phase5-host-feature-pio-run.log`. The build retains the known CubeF4 unused-parameter and newlib syscall/RWX linker warnings recorded above. No upload or hardware test was performed.

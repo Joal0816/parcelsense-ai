@@ -1,6 +1,6 @@
 # ParcelSense AI
 
-ParcelSense AI is an offline, on-device package-handling classifier project for BCA182 Embedded Systems Programming, Laboratory Activity No. 4. Its intended target is the RT-Thread RT-Spark with STM32F407ZGT6. The firmware foundation builds, and a host-side Phase 4 processing/export pipeline is available, but neither has been run on an RT-Spark board. Sensors, embedded model inference, and serial output are not implemented.
+ParcelSense AI is an offline, on-device package-handling classifier project for BCA182 Embedded Systems Programming, Laboratory Activity No. 4. Its intended target is the RT-Thread RT-Spark with STM32F407ZGT6. The firmware foundation, host-side 24-feature/inference boundary, and Phase 4 processing/export pipeline are available, but none has been run on an RT-Spark board. Physical sensor drivers, a real-data model, task-connected inference, and serial output are not implemented.
 
 ## Objective
 
@@ -19,6 +19,8 @@ The RT-Spark revision, installed sensors and UI, pinout, clock source, programme
 
 **Sense → Process → Infer → Act → Record.** See [architecture](docs/ARCHITECTURE.md) for responsibilities and data flow.
 
+The project selection and tradeoffs are summarized in [project rationale](docs/PROJECT_RATIONALE.md). Laboratory reporting, test acceptance, and demonstration guidance are in the [report outline](docs/REPORT_OUTLINE.md), [test plan](docs/TEST_PLAN.md), [software demo script](docs/DEMO_SCRIPT.md), and [evidence manifest](evidence/README.md). License and third-party notice status is recorded in [attribution notes](docs/ATTRIBUTION.md).
+
 ## Repository map
 
 - `firmware/`: future embedded application and board notes.
@@ -35,6 +37,8 @@ The RT-Spark revision, installed sensors and UI, pinout, clock source, programme
 See [firmware build instructions](docs/BUILD.md). Run `pio run` to build the MCU foundation and `sh tools/test_host.sh` for hardware-independent checks. A successful compile does not establish RT-Spark board compatibility; do not upload until the physical board and debug interface are verified. Keep sensitive participant information and raw recordings out of Git unless explicitly reviewed and approved for sharing.
 
 The offline CSV processing steps and synthetic-only pipeline tests are described in [the ML pipeline guide](docs/ML_PIPELINE.md). Real capture requires the board and an instructor-reviewed safe labeling protocol.
+
+The C feature extractor and sample-window inference boundary are host-testable and checked against the Python feature contract. They are not connected to firmware tasks until physical sensors and a real-data model are verified. Run `sh tools/test_host.sh`, `python3 -m unittest discover -s tests/ml -v`, `python3 -m unittest discover -s backend/tests -v`, and `python3 tools/check_docs.py` for software checks. Frontend checks are `cd frontend && npm ci && npm run typecheck && npm test && npm run build`. The [software test plan](docs/TEST_PLAN.md) lists browser, release, and hardware-gated checks.
 
 A separate [ParcelSense Field Desk PWA](frontend/README.md) is available for local CSV/session and evaluation review. See the [Field Desk user guide](docs/ParcelSense%20User%20Guide.md) for step-by-step instructions. Run `cd frontend && npm ci && npm run dev:local` to start both the loopback PWA and optional local API. It is an optional review tool; embedded inference remains independent of it. The [frontend/PWA plan](docs/FRONTEND_PWA_PLAN.md) tracks its remaining validation work.
 

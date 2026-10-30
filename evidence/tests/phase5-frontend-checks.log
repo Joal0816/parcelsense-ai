@@ -1,0 +1,46 @@
+
+> parcelsense-companion@0.1.0 typecheck
+> tsc -b --pretty false
+
+
+> parcelsense-companion@0.1.0 test
+> node --experimental-strip-types tests/run.test.ts
+
+✔ parses a valid sample and preserves unknown source columns (2.919961ms)
+✔ handles quoted commas, escaped quotes, and embedded newlines (0.388312ms)
+✔ rejects unknown labels and malformed timestamps (0.309317ms)
+✔ excludes all valid samples in a trial with conflicting labels (0.785327ms)
+✔ supports uint32 timestamp wrap and excludes duplicate timestamps (1.091287ms)
+✔ reports unsupported schema and missing columns before review (0.531678ms)
+✔ spreadsheet-safe export keeps signed sensor values and neutralizes text formulas (0.959121ms)
+✔ accepts the pipeline report contract and preserves unknown provenance (0.539795ms)
+✔ rejects a missing or unsupported report schema (0.296072ms)
+✔ quota failures explain recovery without implying older records were removed (0.440453ms)
+✔ non-quota storage errors retain their original explanation (0.241292ms)
+✔ backend client reads health and stored sessions (28.44822ms)
+✔ backend client requires the synthetic provenance response header (1.879499ms)
+✔ backend client uploads an explicit provenance and deletes a selected copy (0.906223ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.945411
+
+> parcelsense-companion@0.1.0 build
+> tsc -b && vite build && node scripts/generate-sw.mjs
+
+vite v8.3.3 building client environment for production...
+transforming...
+✓ 20 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                       0.84 kB │ gzip:  0.45 kB
+dist/assets/csv.worker-BMQuqfWl.js    4.89 kB
+dist/assets/index-7YNUYjZC.css       41.82 kB │ gzip:  9.26 kB
+dist/assets/index-Y6spORdI.js       282.61 kB │ gzip: 86.15 kB
+
+✓ built in 207ms
+Generated offline app-shell cache for 8 files (ee508f2e9b).

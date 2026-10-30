@@ -65,6 +65,54 @@ class PipelineTests(unittest.TestCase):
         self.assertIsNotNone(match)
         self.assertEqual(int(match.group(1)), len(pipeline.FEATURE_NAMES))
 
+    @unittest.skipUnless(shutil.which("cc"), "C compiler is unavailable")
+    def test_firmware_feature_extractor_matches_python_pipeline(self):
+        class MotionSample(ctypes.Structure):
+            _fields_ = [
+                ("timestamp_ms", ctypes.c_uint32),
+                ("status", ctypes.c_int),
+                ("valid", ctypes.c_bool),
+                ("acceleration_m_s2", ctypes.c_float * 3),
+                ("angular_velocity_rad_s", ctypes.c_float * 3),
+            ]
+
+        rows = list(synthetic_rows())[:100]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "SYNTHETIC_TEST_ONLY.csv"
+            write_rows(source, rows)
+            library_path = tmp_path / "libfeatures.so"
+            subprocess.run([
+                "cc", "-shared", "-fPIC", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                "-I", str(ROOT / "firmware" / "include"),
+                str(ROOT / "firmware" / "src" / "features.c"),
+                str(ROOT / "firmware" / "src" / "sensor_validation.c"),
+                "-lm", "-o", str(library_path),
+            ], check=True, capture_output=True, text=True)
+            library = ctypes.CDLL(str(library_path))
+            extract = library.parcelsense_extract_features
+            extract.argtypes = [ctypes.POINTER(MotionSample), ctypes.c_size_t,
+                                ctypes.POINTER(ctypes.c_float)]
+            extract.restype = ctypes.c_int
+
+            trials, exclusions = pipeline.read_trials(source)
+            self.assertFalse(exclusions)
+            samples = [sample for sample in trials[0].records if sample is not None]
+            self.assertEqual(len(samples), 100)
+            c_samples = (MotionSample * len(samples))(*[
+                MotionSample(
+                    sample.timestamp_ms, 0, True,
+                    (ctypes.c_float * 3)(*sample.acceleration),
+                    (ctypes.c_float * 3)(*sample.angular_velocity),
+                )
+                for sample in samples
+            ])
+            actual = (ctypes.c_float * len(pipeline.FEATURE_NAMES))()
+            self.assertEqual(extract(c_samples, len(samples), actual), 0)
+            expected = pipeline.extract_features(samples)
+            for index, name in enumerate(pipeline.FEATURE_NAMES):
+                self.assertAlmostEqual(actual[index], expected[name], delta=1e-5, msg=name)
+
     def test_invalid_sample_breaks_contiguous_windows(self):
         rows = list(synthetic_rows())[:100]
         for i, row in enumerate(rows):

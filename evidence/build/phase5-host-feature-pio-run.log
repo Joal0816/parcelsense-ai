@@ -1,0 +1,155 @@
+Processing rtspark_f407zg_hsi (platform: ststm32@20.0.0; board: rtspark_f407zg_hsi; framework: stm32cube)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/ststm32/rtspark_f407zg_hsi.html
+PLATFORM: ST STM32 (20.0.0) > ParcelSense STM32F407ZG HSI foundation (RT-Spark hardware unverified)
+HARDWARE: STM32F407ZGT6 16MHz, 128KB RAM, 1MB Flash
+DEBUG: Current (stlink) External (stlink)
+PACKAGES:
+ - framework-stm32cubef4 @ 1.28.3
+ - tool-ldscripts-ststm32 @ 0.3.0
+ - toolchain-gccarmnoneeabi @ 1.120301.0 (12.3.1)
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 0 compatible libraries
+Scanning dependencies...
+No dependencies
+Building in release mode
+Compiling .pio/build/rtspark_f407zg_hsi/FreeRTOS/list.o
+Compiling .pio/build/rtspark_f407zg_hsi/FreeRTOS/portable/GCC/ARM_CM4F/port.o
+Compiling .pio/build/rtspark_f407zg_hsi/FreeRTOS/portable/MemMang/heap_4.o
+Compiling .pio/build/rtspark_f407zg_hsi/FreeRTOS/queue.o
+Compiling .pio/build/rtspark_f407zg_hsi/FreeRTOS/tasks.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_adc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_adc_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_can.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_cec.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_cortex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_crc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_cryp.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_cryp_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dac.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dac_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dcmi.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dcmi_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dfsdm.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dma.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dma2d.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dma_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_dsi.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_eth.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_exti.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_flash.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_flash_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_flash_ramfunc.o
+/tmp/parcelsense-platformio/packages/framework-stm32cubef4/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c: In function 'FLASH_MassErase':
+/tmp/parcelsense-platformio/packages/framework-stm32cubef4/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c:948:60: warning: unused parameter 'Banks' [-Wunused-parameter]
+  948 | static void FLASH_MassErase(uint8_t VoltageRange, uint32_t Banks)
+      |                                                   ~~~~~~~~~^~~~~
+/tmp/parcelsense-platformio/packages/framework-stm32cubef4/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c: In function 'FLASH_OB_EnableWRP':
+/tmp/parcelsense-platformio/packages/framework-stm32cubef4/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c:1027:74: warning: unused parameter 'Banks' [-Wunused-parameter]
+ 1027 | static HAL_StatusTypeDef FLASH_OB_EnableWRP(uint32_t WRPSector, uint32_t Banks)
+      |                                                                 ~~~~~~~~~^~~~~
+/tmp/parcelsense-platformio/packages/framework-stm32cubef4/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c: In function 'FLASH_OB_DisableWRP':
+/tmp/parcelsense-platformio/packages/framework-stm32cubef4/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c:1063:75: warning: unused parameter 'Banks' [-Wunused-parameter]
+ 1063 | static HAL_StatusTypeDef FLASH_OB_DisableWRP(uint32_t WRPSector, uint32_t Banks)
+      |                                                                  ~~~~~~~~~^~~~~
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_fmpi2c.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_fmpi2c_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_fmpsmbus.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_fmpsmbus_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_gpio.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_hash.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_hash_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_hcd.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_i2c.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_i2c_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_i2s.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_i2s_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_irda.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_iwdg.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_lptim.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_ltdc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_ltdc_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_mmc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_nand.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_nor.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_pccard.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_pcd.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_pcd_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_pwr.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_pwr_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_qspi.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_rcc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_rcc_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_rng.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_rtc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_rtc_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_sai.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_sai_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_sd.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_sdram.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_smartcard.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_smbus.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_spdifrx.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_spi.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_sram.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_tim.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_tim_ex.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_uart.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_usart.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_hal_wwdg.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_adc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_crc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_dac.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_dma.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_dma2d.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_exti.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_fmc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_fmpi2c.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_fsmc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_gpio.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_i2c.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_lptim.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_pwr.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_rcc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_rng.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_rtc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_sdmmc.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_spi.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_tim.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_usart.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_usb.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkHALDriver/Src/stm32f4xx_ll_utils.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/app_tasks.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/classifier.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/faults.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/features.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/foundation.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/hal_timebase.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/inference.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/log_buffer.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/main.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/module_diagnostics.o
+Compiling .pio/build/rtspark_f407zg_hsi/src/sensor_validation.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkCMSISDevice/gcc/startup_stm32f407xx.o
+Compiling .pio/build/rtspark_f407zg_hsi/FrameworkCMSISDevice/system_stm32f4xx.o
+Archiving .pio/build/rtspark_f407zg_hsi/libFrameworkCMSISDevice.a
+Indexing .pio/build/rtspark_f407zg_hsi/libFrameworkCMSISDevice.a
+Linking .pio/build/rtspark_f407zg_hsi/firmware.elf
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-closer.o): in function `_close_r':
+(.text._close_r+0xc): warning: _close is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-readr.o): in function `_read_r':
+(.text._read_r+0x10): warning: _read is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: /home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-writer.o): in function `_write_r':
+(.text._write_r+0x10): warning: _write is not implemented and will always fail
+/home/joal/.platformio/packages/toolchain-gccarmnoneeabi/bin/../lib/gcc/arm-none-eabi/12.3.1/../../../../arm-none-eabi/bin/ld: warning: .pio/build/rtspark_f407zg_hsi/firmware.elf has a LOAD segment with RWX permissions
+Checking size .pio/build/rtspark_f407zg_hsi/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  19.6% (used 25640 bytes from 131072 bytes)
+Flash: [          ]   1.0% (used 9976 bytes from 1048576 bytes)
+Building .pio/build/rtspark_f407zg_hsi/firmware.bin
+========================= [SUCCESS] Took 5.00 seconds =========================

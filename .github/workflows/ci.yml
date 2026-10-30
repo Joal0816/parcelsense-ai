@@ -15,6 +15,21 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  docs:
+    name: Documentation links
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Check local Markdown links
+        run: python tools/check_docs.py
+
   web:
     name: Web checks and browser readiness
     runs-on: ubuntu-24.04
@@ -112,7 +127,7 @@ jobs:
 
   deploy:
     name: Deploy production PWA
-    needs: [web, python, firmware-host, firmware-build]
+    needs: [docs, web, python, firmware-host, firmware-build]
     if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-24.04
     environment: production

@@ -38,9 +38,11 @@ AP3216C ambient-light readings are a secondary context modality only. Their usef
 
 Host smoke tests use temporary synthetic fixtures solely to check mechanics and C/Python parity. They are not evidence of sensor behavior or classification quality. Real board capture, performance results, label thresholds, and context-modality usefulness remain pending.
 
-## Host-testable embedded classifier boundary
+## Host-testable feature and inference boundary
 
-`firmware/include/classifier.h` defines the 24-feature C ABI expected from the host pipeline's generated `parcelsense_predict` function. `parcelsense_classify_features()` rejects a missing callback, wrong feature count, null input, non-finite feature, or out-of-range model result and leaves the output unavailable on every failure. Host tests use a deterministic callback fixture only to verify this contract; it is not a model and does not claim class quality. The adapter is not yet linked into `InferenceTask`, and `foundation_placeholder_result()` remains the only task behavior. Model integration belongs to Phase 5 after real board data and held-out evaluation.
+`firmware/include/motion_features.h` and `firmware/src/features.c` implement the same 24-value feature order and population-statistics formulas as `ml/scripts/pipeline.py`. They require a non-empty window of valid samples and strictly increasing uint32 millisecond timestamps (including supported wraparound). An invalid window or a feature that cannot be represented as a finite `float` returns an error and leaves the output zeroed.
+
+`firmware/include/inference.h` and `firmware/src/inference.c` compose a motion window, the feature extractor, and `parcelsense_classify_features()`. The classifier rejects a missing callback, wrong feature count, null/non-finite input, and out-of-range model result; every failure keeps the output unavailable. Host parity tests compare all 24 feature values with the Python pipeline on temporary synthetic fixtures. A deterministic callback fixture checks only the interface and class-index mapping; it is not a trained model and does not claim class quality. The composition is not connected to `InferenceTask`; `foundation_placeholder_result()` remains its behavior until verified acquisition and a real-data model are available. The board-arrival checklist remains the gate for target integration and measurements.
 
 ## Constraints and limitations
 

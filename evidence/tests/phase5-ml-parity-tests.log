@@ -1,0 +1,10 @@
+test_exported_c_matches_python_tree (test_pipeline.PipelineTests.test_exported_c_matches_python_tree) ... ok
+test_firmware_feature_extractor_matches_python_pipeline (test_pipeline.PipelineTests.test_firmware_feature_extractor_matches_python_pipeline) ... ok
+test_firmware_model_abi_matches_pipeline_feature_contract (test_pipeline.PipelineTests.test_firmware_model_abi_matches_pipeline_feature_contract) ... ok
+test_invalid_sample_breaks_contiguous_windows (test_pipeline.PipelineTests.test_invalid_sample_breaks_contiguous_windows) ... ok
+test_training_group_split_and_generated_artifacts (test_pipeline.PipelineTests.test_training_group_split_and_generated_artifacts) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.356s
+
+OK

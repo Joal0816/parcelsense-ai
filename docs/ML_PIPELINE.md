@@ -10,7 +10,7 @@ Windows are split by `(session_id, trial_id)` with a deterministic seed. The def
 
 Features are per-axis mean, population standard deviation, and RMS for acceleration and angular velocity, plus acceleration-norm mean/std/RMS/maximum, gyro-norm RMS, and acceleration-jerk RMS. This is 24 input features. There is no learned scaling step. A simple ordinal threshold baseline uses training medians of acceleration-norm standard deviation; a deterministic depth-3 CART tree is the compact candidate. The threshold is a comparison baseline, not a validated handling rule.
 
-The JSON report records the split, class counts, confusion matrices, per-class precision/recall/F1, macro-F1, and exclusions count. `model.c` exports the tree with a `parcelsense_predict()` entry point; its feature order and integer output mapping (index into `labels`, ordered Stable, Normal Handling, Rough Handling) are in `model.json`. The test suite compiles this C export and checks predictions against the Python tree.
+The JSON report records the split, class counts, confusion matrices, per-class precision/recall/F1, macro-F1, and exclusions count. `model.c` exports the tree with a `parcelsense_predict()` entry point; its feature order and integer output mapping (index into `labels`, ordered Stable, Normal Handling, Rough Handling) are in `model.json`. The test suite compiles this C export and checks predictions against the Python tree. Firmware `features.c` implements the same ordered 24 window features, and a host parity check compares its outputs with this Python implementation on temporary synthetic fixtures.
 
 ## Run
 
@@ -27,4 +27,4 @@ At 50 Hz, 100 samples represent a nominal 2-second window; verify the actual sam
 
 ## Evidence boundary
 
-Automated fixtures are generated temporarily by `tests/ml/test_pipeline.py` and are named synthetic smoke tests. They only verify parser/windowing, group split, training mechanics, report generation, and Python/C parity. They do not establish real-world class separability, accuracy, safe thresholds, hardware sampling, latency, or embedded resource use. With no STM32 board or board-generated data, the Phase 4 real-data gate is open and all performance claims remain **PENDING**.
+Automated fixtures are generated temporarily by `tests/ml/test_pipeline.py` and are named synthetic smoke tests. They only verify parser/windowing, group split, training mechanics, report generation, Python/C model-export parity, and Python/C feature parity. They do not establish real-world class separability, accuracy, safe thresholds, hardware sampling, latency, or embedded resource use. With no STM32 board or board-generated data, the Phase 4 real-data gate is open and all performance claims remain **PENDING**. The C feature/inference modules are software integration seams; no trained model is linked to the firmware task.

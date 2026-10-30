@@ -1,0 +1,28 @@
+test_health_and_demo_csv_are_available_and_marked_synthetic (test_api.BackendApiTests.test_health_and_demo_csv_are_available_and_marked_synthetic) ... 127.0.0.1 - - [30/Oct/2026 12:34:16] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2026 12:34:16] "GET /api/demo.csv HTTP/1.1" 200 -
+ok
+test_rejects_cross_origin_browser_requests (test_api.BackendApiTests.test_rejects_cross_origin_browser_requests) ... 127.0.0.1 - - [30/Oct/2026 12:34:16] "GET /api/health HTTP/1.1" 403 -
+127.0.0.1 - - [30/Oct/2026 12:34:16] "GET /api/health HTTP/1.1" 200 -
+ok
+test_rejects_invalid_csv_provenance_and_duplicate_headers (test_api.BackendApiTests.test_rejects_invalid_csv_provenance_and_duplicate_headers) ... 127.0.0.1 - - [30/Oct/2026 12:34:16] "POST /api/sessions HTTP/1.1" 400 -
+127.0.0.1 - - [30/Oct/2026 12:34:16] "POST /api/sessions HTTP/1.1" 400 -
+127.0.0.1 - - [30/Oct/2026 12:34:16] "POST /api/sessions HTTP/1.1" 400 -
+ok
+test_rejects_oversized_request_before_reading_body (test_api.BackendApiTests.test_rejects_oversized_request_before_reading_body) ... 127.0.0.1 - - [30/Oct/2026 12:34:16] "POST /api/sessions HTTP/1.1" 400 -
+ok
+test_rejects_partially_invalid_uploads (test_api.BackendApiTests.test_rejects_partially_invalid_uploads) ... 127.0.0.1 - - [30/Oct/2026 12:34:16] "POST /api/sessions HTTP/1.1" 400 -
+ok
+test_session_persists_across_api_restart (test_api.BackendApiTests.test_session_persists_across_api_restart) ... 127.0.0.1 - - [30/Oct/2026 12:34:16] "POST /api/sessions HTTP/1.1" 201 -
+127.0.0.1 - - [30/Oct/2026 12:34:17] "GET /api/sessions/nHIgfE4QjpMC8I0D HTTP/1.1" 200 -
+ok
+test_upload_persists_validated_copy_and_delete_removes_it (test_api.BackendApiTests.test_upload_persists_validated_copy_and_delete_removes_it) ... 127.0.0.1 - - [30/Oct/2026 12:34:17] "POST /api/sessions HTTP/1.1" 201 -
+127.0.0.1 - - [30/Oct/2026 12:34:17] "GET /api/sessions HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2026 12:34:17] "GET /api/sessions/dKpyq0tLkGjxYZdJ HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2026 12:34:17] "DELETE /api/sessions/dKpyq0tLkGjxYZdJ HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2026 12:34:17] "GET /api/sessions/dKpyq0tLkGjxYZdJ HTTP/1.1" 404 -
+ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.161s
+
+OK

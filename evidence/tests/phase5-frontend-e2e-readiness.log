@@ -1,0 +1,27 @@
+
+> parcelsense-companion@0.1.0 e2e:readiness
+> npm run build && node scripts/e2e-readiness.mjs
+
+
+> parcelsense-companion@0.1.0 build
+> tsc -b && vite build && node scripts/generate-sw.mjs
+
+vite v8.3.3 building client environment for production...
+transforming...
+✓ 20 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                       0.84 kB │ gzip:  0.45 kB
+dist/assets/csv.worker-BMQuqfWl.js    4.89 kB
+dist/assets/index-7YNUYjZC.css       41.82 kB │ gzip:  9.26 kB
+dist/assets/index-Y6spORdI.js       282.61 kB │ gzip: 86.15 kB
+
+✓ built in 175ms
+Generated offline app-shell cache for 8 files (ee508f2e9b).
+✓ Chromium: landmarks, control names, IDs, skip link and keyboard navigation
+✓ Chromium: responsive widths 1440, 768, 390 and 320px without horizontal overflow
+✓ Chromium: production app shell reloads and navigates with the preview server stopped
+✓ Firefox: landmarks, control names, IDs and client-side route navigation
+✓ Firefox: responsive widths 1440, 768, 390 and 320px without horizontal overflow
+✓ Firefox: production app shell reloads and navigates with the preview server stopped
+✓ browser readiness checks passed
