@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { LABELS, type CsvReview, type ImportIssue, type MotionSample, type SavedEvaluation, type SavedSession } from "./domain.ts";
 import { parseMotionCsv } from "./lib/csv.ts";
 import { deleteBackendSession, getBackendHealth, getBackendSessions, uploadReviewedSession, type BackendHealth, type BackendSession } from "./lib/backend.ts";
@@ -352,7 +352,7 @@ function App({ offlineReady }: { offlineReady: boolean }) {
         {error && <div className="alert alert--error" role="alert"><Icon name="warning" /><span>{error}</span><button type="button" className="icon-button" onClick={() => setError("")} aria-label="Dismiss error"><Icon name="close" size={16} /></button></div>}
         {message && <div className="alert alert--success" role="status"><Icon name="check" /><span>{message}</span><button type="button" className="icon-button" onClick={() => setMessage("")} aria-label="Dismiss message"><Icon name="close" size={16} /></button></div>}
 
-        {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => chooseCsv()} onOpen={(item) => void openImport(item)} onPage={setPage} />}
+        {page === "overview" && <OverviewPage imports={imports} samples={totalSamples} excluded={totalExcluded} offlineReady={offlineReady} onImport={() => chooseCsv()} onTryDemo={() => { setCaptureMode("synthetic"); setSelected(null); setPage("sessions"); void loadDemoCsv(); }} onOpen={(item) => void openImport(item)} onPage={setPage} />}
         {page === "sessions" && <SessionsPage imports={imports} selected={selected} samples={selectedSamples} processing={processing} progress={progress} dragging={dragging} demoLoading={demoLoading} captureMode={captureMode} onCaptureModeChange={setCaptureMode} backendAvailable={backendState.available} backendUploadId={backendUploadId} onLoadDemo={() => void loadDemoCsv()} onUpload={(item, origin) => void sendReviewedToBackend(item, origin)} onChoose={() => chooseCsv(captureMode === "stm32" ? "real_board" : "unknown")} onBack={() => setSelected(null)} onDrop={(event) => onDrop(event, captureMode === "stm32" ? "real_board" : "unknown")} onDrag={handleDrag} onOpen={(item) => void openImport(item)} onDelete={(item) => void removeImport(item)} onExport={(item, safe) => void exportImport(item, safe)} onCancelParse={() => { workerRef.current?.terminate(); workerRef.current = null; setProcessing(false); setProgress(null); setMessage("Import canceled. The source file was not changed."); }} />}
         {page === "evaluation" && <EvaluationPage reports={evaluations} report={report} inputRef={reportInput} onImport={() => reportInput.current?.click()} onChange={(event) => void importReport(event.target.files?.[0])} onChoose={chooseReport} onDelete={(item) => void removeEvaluation(item)} />}
         {page === "device" && <DevicePage />}
@@ -367,15 +367,15 @@ function App({ offlineReady }: { offlineReady: boolean }) {
   </div>;
 }
 
-function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onOpen, onPage }: { imports: SavedSession[]; samples: number; excluded: number; offlineReady: boolean; onImport: () => void; onOpen: (item: SavedSession) => void; onPage: (page: Page) => void }) {
+function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onTryDemo, onOpen, onPage }: { imports: SavedSession[]; samples: number; excluded: number; offlineReady: boolean; onImport: () => void; onTryDemo: () => void; onOpen: (item: SavedSession) => void; onPage: (page: Page) => void }) {
   const latest = imports[0];
   return <>
-    <PageTitle overline="OPERATOR WORKSPACE · 01" title="A clearer view of every handling session." description="Review real capture files, check the data, and keep your evaluation evidence together." action={<button className="button button--primary" type="button" onClick={onImport}><Icon name="upload" size={16} />Import CSV</button>} />
+    <PageTitle overline="OPERATOR WORKSPACE · 01" title="A clearer view of every handling session." description="See how motion data review works with a synthetic sample, or import a compatible capture CSV." action={<button className="button button--primary" type="button" onClick={onImport}><Icon name="upload" size={16} />Import CSV</button>} />
     <div className="overview-grid">
       <section className="panel welcome-panel">
         <div className="welcome-heading"><div><div className="eyebrow eyebrow--muted">FIELD DESK / LOCAL WORKSPACE</div><h2>Make the data<br /><em>easy to trust.</em></h2></div><div className="welcome-stamp"><span>{import.meta.env.DEV ? "OPT-IN" : "OFFLINE"}</span><b>{import.meta.env.DEV ? "01" : "02"}</b><span>{import.meta.env.DEV ? <>LOCAL<br />API</> : <>NO<br />CLOUD</>}</span></div></div>
-        <p>{import.meta.env.DEV ? "Import a board recording or a pipeline report. Files stay in this browser unless you choose to send reviewed rows to the local API." : "Import a board recording or a pipeline report. Files stay in this browser; the hosted app has no backend connection."}</p>
-        <button className="button button--light" type="button" onClick={onImport}><Icon name="upload" size={16} />Choose a recording <Icon name="arrow" size={15} /></button>
+        <p>{import.meta.env.DEV ? "Start with generated motion data, or import a compatible capture CSV. Files stay in this browser unless you choose to copy reviewed rows to the local API." : "Start with generated motion data, or import a compatible capture CSV. Files stay in this browser; the hosted app has no backend connection."}</p>
+        <div className="welcome-actions"><button className="button button--light" type="button" onClick={onTryDemo}>Try the synthetic demo <Icon name="arrow" size={15} /></button><button className="button button--outline" type="button" onClick={onImport}><Icon name="upload" size={15} />Import a CSV</button></div>
         <div className="welcome-foot"><span><span className="tiny-led" />{offlineReady ? "APP SHELL CACHED" : "FIRST VISIT · OPEN WHILE ONLINE"}</span><span>STABLE / NORMAL / ROUGH</span></div>
       </section>
       <section className="panel device-summary">
@@ -387,6 +387,15 @@ function OverviewPage({ imports, samples, excluded, offlineReady, onImport, onOp
         <button className="text-button" type="button" onClick={() => onPage("device")}>View device status <Icon name="arrow" size={15} /></button>
       </section>
     </div>
+
+    <section className="workflow-guide" aria-labelledby="workflow-guide-title">
+      <h2 id="workflow-guide-title">From sample to session review</h2>
+      <ol>
+        <li><span>1</span><div><b>Choose data</b><small>Try the synthetic sample now, or import an STM32 CSV later.</small></div></li>
+        <li><span>2</span><div><b>Check the rows</b><small>Schema checks flag invalid or excluded values before saving.</small></div></li>
+        <li><span>3</span><div><b>Understand the session</b><small>Review motion traces, supplied labels, and raw readings. No prediction runs here.</small></div></li>
+      </ol>
+    </section>
 
     <div className="metric-strip" aria-label="Local workspace summary">
       <div className="metric"><span>IMPORTED SESSIONS</span><b>{imports.length.toString().padStart(2, "0")}</b><small>Stored in this browser</small></div>
@@ -441,6 +450,7 @@ function SessionDetail({ item, samples, backendAvailable, uploading, onUpload, o
     <button className="text-button detail-back" type="button" onClick={onBack}><Icon name="chevron" size={14} />All imported files</button>
     <div className="detail-toolbar"><div><div className="eyebrow">IMPORT REVIEW · {item.schemaVersion}</div><h2 tabIndex={-1}>{item.sourceName}</h2><span className="detail-meta">Imported {formatDate(item.importedAt)} · {item.sessionIds.length} source session IDs</span></div><div className="detail-actions"><button className="button button--outline" type="button" onClick={() => onExport(item, false)}><Icon name="download" size={15} />Exact values</button><button className="button button--outline" type="button" onClick={() => onExport(item, true)}>Spreadsheet-safe</button><button className="icon-button icon-button--danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.sourceName}`}><Icon name="trash" size={16} /></button></div></div>
     {(isSynthetic || dataOrigin === "synthetic") && <div className="synthetic-note"><b>Synthetic data provenance.</b> Marked as generated software data; these values are not physical sensor readings or classifier evidence.</div>}
+    {isSynthetic && <SyntheticDemoExplainer samples={samples} />}
     {isRealBoard && <div className="board-origin-note"><b>STM32 origin declared by user · not verified.</b> The app cannot inspect how this CSV was recorded. Confirm the hardware, sensor units, and capture procedure before using it as real-device evidence.</div>}
     {import.meta.env.DEV && <div className="backend-upload-row"><div><span className="eyebrow">OPTIONAL LOCAL API COPY</span><p>Copies the reviewed valid rows to the local SQLite backend. Excluded source rows are not uploaded.</p></div><div className="backend-upload-controls"><label className="visually-hidden" htmlFor="backend-data-origin">Data provenance</label><select id="backend-data-origin" value={dataOrigin} onChange={(event) => setDataOrigin(event.target.value as DataOrigin)} disabled={!backendAvailable || uploading || isSynthetic}><option value="unknown">Provenance unknown</option><option value="synthetic">Synthetic test data</option><option value="real_board" disabled={!isRealBoard}>User-declared STM32 · unverified</option></select><button className="button button--outline" type="button" disabled={!backendAvailable || uploading || samples.length === 0} onClick={() => onUpload(dataOrigin)}>{uploading ? "Sending…" : "Send reviewed copy"}</button></div></div>}
     <div className="detail-stats"><div><span>VALID ROWS</span><b>{item.sampleCount.toLocaleString()}</b></div><div><span>EXCLUDED ROWS</span><b>{item.excludedCount.toLocaleString()}</b></div><div><span>SOURCE RECORDS</span><b>{item.totalRecords.toLocaleString()}</b></div><div><span>SESSION IDS</span><b>{item.sessionIds.length.toString().padStart(2, "0")}</b></div></div>
@@ -449,6 +459,42 @@ function SessionDetail({ item, samples, backendAvailable, uploading, onUpload, o
     <div className="table-toolbar"><div><span className="eyebrow">SAMPLE PREVIEW</span><h3>Original values · first {Math.min(samples.length, 8)} rows</h3></div><span>{samples.length.toLocaleString()} VALID TOTAL</span></div>
     {samples.length ? <div className="table-scroll"><table className="sample-table"><thead><tr><th>RECORD</th><th>SESSION / TRIAL</th><th>TIME (MS)</th><th>ACCELERATION (M/S²)</th><th>GYRO (RAD/S)</th><th>LABEL</th></tr></thead><tbody>{samples.slice(0, 8).map((sample) => <tr key={sample.rowNumber}><td>#{sample.rowNumber}</td><td><b>{sample.sessionId}</b><small>{sample.trialId}</small></td><td>{sample.timestampMs}</td><td>{sample.accel.map((value) => value.toFixed(3)).join(" / ")}</td><td>{sample.gyro.map((value) => value.toFixed(3)).join(" / ")}</td><td><LabelPill label={sample.label} /></td></tr>)}</tbody></table></div> : <p className="empty-note">No valid rows were saved. The validation log above contains the exclusions.</p>}
     <p className="exact-export-note">Exact-value export preserves imported cell values for validated rows. Spreadsheet-safe export prefixes formula-like text values. Neither export changes the stored record.</p>
+  </section>;
+}
+
+function SyntheticDemoExplainer({ samples }: { samples: MotionSample[] }) {
+  const titleId = useId();
+  const colors = ["#43805e", "#c8794c", "#80647b"];
+  const series = LABELS.map((label, index) => {
+    const first = samples.find((sample) => sample.label === label);
+    const points = first ? samples.filter((sample) => sample.trialId === first.trialId).sort((a, b) => a.timestampMs - b.timestampMs) : [];
+    return { label, points, color: colors[index] };
+  }).filter((trace) => trace.points.length > 0);
+  const trialCount = new Set(samples.map((sample) => sample.trialId)).size;
+  const left = 50;
+  const right = 706;
+  const top = 14;
+  const bottom = 188;
+  const timeMax = Math.max(2000, ...series.flatMap((trace) => trace.points.map((point) => point.timestampMs)));
+  const x = (time: number) => left + (time / timeMax) * (right - left);
+  const y = (value: number) => top + ((1 - Math.max(-1, Math.min(1, value))) / 2) * (bottom - top);
+  const yTicks = [1, 0.5, 0, -0.5, -1];
+  const xTicks = [0, 500, 1000, 1500, 2000].filter((tick) => tick <= timeMax);
+
+  return <section className="demo-explainer" aria-labelledby={titleId}>
+    <div className="demo-explainer-heading"><div><span className="eyebrow">HOW TO READ THE SAMPLE</span><h3 id={titleId}>Motion over time</h3></div><StatusPill tone="alert">SYNTHETIC</StatusPill></div>
+    <p>Each line is one generated two-second trial. The graph shows X-axis acceleration; more movement creates a larger wave. These labels are in the CSV, not predictions from a trained classifier.</p>
+    <figure className="demo-chart">
+      <svg viewBox="0 0 720 236" role="img" aria-label="Line chart of generated X-axis acceleration over two seconds for Stable, Normal Handling, and Rough Handling trials">
+        {yTicks.map((tick) => <g key={tick} aria-hidden="true"><line className={tick === 0 ? "demo-grid demo-grid--zero" : "demo-grid"} x1={left} x2={right} y1={y(tick)} y2={y(tick)} /><text className="demo-axis-text" x={left - 9} y={y(tick) + 3} textAnchor="end">{tick.toFixed(1)}</text></g>)}
+        {xTicks.map((tick) => <g key={tick} aria-hidden="true"><line className="demo-grid demo-grid--vertical" x1={x(tick)} x2={x(tick)} y1={top} y2={bottom} /><text className="demo-axis-text" x={x(tick)} y={bottom + 18} textAnchor="middle">{tick}</text></g>)}
+        <text className="demo-axis-title" x="12" y="100" transform="rotate(-90 12 100)" textAnchor="middle">Acceleration X (m/s²)</text>
+        <text className="demo-axis-title" x={(left + right) / 2} y="230" textAnchor="middle">Time (ms)</text>
+        {series.map((trace) => <path key={trace.label} className="demo-trace" stroke={trace.color} d={trace.points.map((point, index) => `${index === 0 ? "M" : "L"} ${x(point.timestampMs).toFixed(1)} ${y(point.accel[0]).toFixed(1)}`).join(" ")} />)}
+      </svg>
+      <figcaption className="demo-legend">{series.map((trace) => <span key={trace.label}><i style={{ background: trace.color }} />{trace.label}</span>)}</figcaption>
+    </figure>
+    <p className="demo-summary">The full sample has <b>{samples.length.toLocaleString()} rows</b> across <b>{trialCount} trials</b>. Review the graph first, then use the table below to inspect the underlying numbers.</p>
   </section>;
 }
 
@@ -552,6 +598,7 @@ function ReviewDialog({ name, review, dataOrigin, onCancel, onSave }: { name: st
     <div className="review-dialog-header"><span className="review-file-icon"><Icon name="file" /></span><div><span className="eyebrow">BEFORE SAVING · CSV REVIEW</span><h2 id="review-title">Check this recording.</h2><p id="review-description">{name}</p></div><button className="icon-button" type="button" onClick={onCancel} aria-label="Cancel CSV review"><Icon name="close" /></button></div>
     {review.fatalError ? <div className="fatal-error"><Icon name="warning" /><div><b>This file cannot be reviewed.</b><span>{review.fatalError}</span></div></div> : <>
       <div className="review-stats"><div><span>VALID ROWS</span><b>{review.samples.length.toLocaleString()}</b><small>Will be available to inspect</small></div><div><span>EXCLUDED ROWS</span><b className={review.excludedRowCount ? "text-alert" : ""}>{review.excludedRowCount.toLocaleString()}</b><small>Will not enter sample storage</small></div><div><span>NOTES</span><b>{warnings.toLocaleString()}</b><small>Warnings retained locally</small></div></div>
+      {dataOrigin === "synthetic" && <SyntheticDemoExplainer samples={review.samples} />}
       <div className="review-split"><section><div className="eyebrow">VALIDATION NOTES · {review.issues.length}</div><div className="review-issues">{review.issues.length ? review.issues.slice(0, 5).map((entry, index) => <IssueRow key={`${entry.rowNumber}-${index}`} issue={entry} />) : <p className="empty-note">No validation issues found in {review.totalRecords} records.</p>}{review.issues.length > 5 && <p className="more-issues">+ {review.issues.length - 5} more; all notes will be saved</p>}</div></section><section><div className="eyebrow">SAMPLE PREVIEW · FIRST {Math.min(review.samples.length, 4)}</div>{review.samples.length ? <div className="review-sample-list">{review.samples.slice(0, 4).map((sample) => <div key={sample.rowNumber}><span>#{sample.rowNumber}</span><b>{sample.sessionId} / {sample.trialId}</b><LabelPill label={sample.label} /></div>)}</div> : <p className="empty-note">No valid rows. You may save the review notes only.</p>}</section></div>
       {dataOrigin === "real_board" && <label className="origin-confirm"><input type="checkbox" checked={boardOriginConfirmed} onChange={(event) => setBoardOriginConfirmed(event.target.checked)} /><span><b>I declare this CSV was recorded using an STM32 board.</b><small>ParcelSense cannot verify the device or recording process. This import will be labeled “STM32 declared · unverified.”</small></span></label>}
     </>}

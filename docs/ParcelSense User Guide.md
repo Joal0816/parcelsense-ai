@@ -65,7 +65,9 @@ Both modes are available from **Data sessions** in the same web app. Choose a mo
 
 ### Synthetic demo
 
-Select **Synthetic demo**, then **Load synthetic sample**. The app includes a deterministic 1,200-row CSV fixture, so this works on the hosted app and after the PWA has been cached for offline use. Review and save it through the normal CSV flow. The saved import is marked synthetic.
+From **Overview**, select **Try the synthetic demo**, or open **Data sessions**, choose **Synthetic demo**, then select **Load synthetic sample**. The review window shows a graph before you save: time is on the horizontal axis, acceleration on the vertical axis, and each colored line is one generated trial. The larger waves in this sample are assigned the rough-handling label. The labels are part of the CSV; the app is not making predictions.
+
+The fixture has 1,200 rows across 12 trials. Select **Save reviewed import** to continue. In the saved session, the same graph appears above the raw row table, alongside the label counts and validation notes. The sample works on the hosted app and after the PWA has been cached for offline use.
 
 These generated values are only for exercising import and review. They are not sensor readings, a parcel-handling result, or evidence of classifier accuracy. Do not use them to claim model performance.
 
