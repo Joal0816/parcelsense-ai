@@ -52,9 +52,9 @@ function formatDate(value: string, compact = false): string {
 }
 
 function originLabel(origin: DataOrigin | undefined): string {
-  if (origin === "synthetic") return "synthetic";
+  if (origin === "synthetic") return "Synthetic test data";
   if (origin === "real_board") return "STM32 declared · unverified";
-  return "source unknown";
+  return "Provenance unknown";
 }
 
 function PageTitle({ overline, title, description, action }: { overline: string; title: string; description: string; action?: ReactNode }) {
